@@ -1,39 +1,126 @@
-# Purpose of This Repo
+# AWS Data Lakes Course Exercises
 
-This repo is meant to be used to keep things organized during content development and act as the source of truth for all exercises related to this content.
+This repository contains hands-on exercises for the AWS Data Lakes course, demonstrating practical data engineering concepts from basic lake vs warehouse comparisons to advanced ACID transactions with S3 Tables.
+
+## Course Overview
+
+Students will learn to build and manage data lakes on AWS through four progressive exercises covering:
+- Data lake flexibility vs data warehouse rigidity
+- Change Data Capture (CDC) ingestion patterns
+- Medallion architecture processing (Bronze → Silver → Gold)
+- Advanced ACID transactions and time travel with S3 Tables
 
 ## Environment Requirements and Installation
 
-Fill out the requirements.txt file and describe all dependencies for students to be able to install and run all dependencies for the entire repository.  Add local installation instructions for students. Optionally, add and explain any additional requirements and dependencies (datasets, databases, operating system packages or resources) in this readme file. 
-## Folder Structure
-
-This repo contains a folder for each `exercise`.
-
-Example
-```
-exercise-1-hello
-exercise-2-world
-exercise-3-foo
-exercise-4-bar
+### Core Dependencies
+```bash
+pip install pandas pyarrow boto3 pyspark
 ```
 
-Each `exercise` folder is named using the naming convention of `exercise-#-name-of-exercise`.
+### AWS Services Required
+- **AWS Glue**: ETL jobs and data catalog
+- **Amazon S3**: Data lake storage
+- **Amazon RDS PostgreSQL**: Source database for CDC
+- **AWS Lake Formation**: S3 Tables and governance
+- **Amazon Athena**: Query engine for validation
 
-Example
+### Local Development Setup
+```bash
+# Clone repository
+git clone <repository-url>
+cd cd12441-dend-aws-data-lakes
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Configure AWS credentials
+aws configure
 ```
-exercise-1-hello
+
+### Additional Requirements
+- **Python 3.8+**: Required for all exercises
+- **AWS CLI**: For resource management and deployment
+- **PostgreSQL Client**: For database connectivity testing
+- **Java 8/11**: Required for PySpark local execution
+
+## Exercise Structure
+
+```
+Exercise1-structured-vs-unstructured/     # Data Lake vs Warehouse concepts
+├── starter/                              # Student template with TODOs
+├── solution/                             # Complete working solution
+└── README.md                             # Exercise-specific instructions
+
+Exercise2-cdc-ingestion-bronze/           # CDC ingestion to bronze layer
+├── starter/
+├── solution/
+├── setup/                                # Configuration guides
+└── README.md
+
+Exercise3-medallion-pipeline/             # Standalone Spark processing
+├── starter/
+├── solution/
+├── data/                                 # Sample data and generators
+└── README.md
+
+Exercise4-s3-tables-iceberg/              # Advanced ACID transactions
+├── starter/
+├── solution/
+├── setup/                                # Lake Formation setup
+└── README.md
 ```
 
-Five exercises folders have been provided as a template; However, you may need to add more or possibly use less depending on what is needed.
+## Exercise Progression
 
-If you require an additional exercise folder, you can make a copy of the folder and paste it into the root directory.
+### Exercise 1: Structured vs Unstructured Processing
+**Technology**: Python, pandas, boto3  
+**Concepts**: Schema-on-read vs schema-on-write, data lake flexibility  
+**Duration**: 45 minutes  
+**Prerequisites**: Basic Python, AWS S3 access
 
-### Exercises Folder
+### Exercise 2: CDC Ingestion to Bronze Layer
+**Technology**: AWS Glue, PySpark, PostgreSQL  
+**Concepts**: Change Data Capture, incremental loading, bookmarks  
+**Duration**: 60 minutes  
+**Prerequisites**: AWS Glue setup, RDS PostgreSQL instance
 
-Each `exercise` folder should contain all files and instructions necessary for the exercises along with the solution. The solutions for these exercises will be shared with students. See the `README` in the `exercises` folders for information about folder structure.
+### Exercise 3: Medallion Pipeline Processing
+**Technology**: PySpark (standalone)  
+**Concepts**: Bronze → Silver → Gold architecture, data quality  
+**Duration**: 75 minutes  
+**Prerequisites**: Local PySpark installation
 
-### Environment Requirements and Installation
+### Exercise 4: S3 Tables with Iceberg
+**Technology**: AWS Glue 5.0, Apache Iceberg, Lake Formation  
+**Concepts**: ACID transactions, time travel, schema evolution  
+**Duration**: 90 minutes  
+**Prerequisites**: Lake Formation setup, S3 Tables enabled
 
-Fill out the requirements.txt file and note all package dependencies.  Optionally add and explain any additional requirements (datasets, databases, operating system packages) in this readme file. 
+## Getting Started
+
+1. **Setup Environment**: Install dependencies and configure AWS credentials
+2. **Choose Exercise**: Start with Exercise 1 for foundational concepts
+3. **Complete Starter Code**: Fill in TODO sections in starter files
+4. **Verify Results**: Compare with solution implementations
+5. **Deploy to AWS**: Test with real AWS services (Exercises 2 & 4)
+
+## Learning Outcomes
+
+By completing these exercises, students will:
+- Understand fundamental differences between data lakes and warehouses
+- Implement production-ready CDC ingestion patterns
+- Build scalable medallion architecture pipelines
+- Master advanced data lake features like ACID transactions and time travel
+- Gain hands-on experience with AWS data engineering services
+
+## Support and Troubleshooting
+
+Each exercise includes:
+- Detailed setup instructions
+- Common troubleshooting guides
+- Verification steps and expected outputs
+- Performance optimization tips
+
+For additional support, refer to individual exercise README files and AWS documentation. 
 
 
