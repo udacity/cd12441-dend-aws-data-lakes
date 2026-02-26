@@ -20,11 +20,12 @@ import boto3
 import json
 import time
 import os
+import uuid
 from io import BytesIO
 
 # Configuration
-BUCKET_NAME = os.environ.get('BUCKET_NAME', 'lakehouse-lesson1-student-123456789')
-LOCAL_DATA_PATH = '/workspace/data/clickstream.json'
+BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
+LOCAL_DATA_PATH = 'data/clickstream.json'
 S3_BRONZE_PATH = 'bronze/clickstream/clickstream.parquet'
 
 print("="*70)
@@ -116,7 +117,7 @@ print(f"  Match: {'✓' if s3_row_count == total else '✗'}")
 print("\n[Step 9] Comparison: Structured vs Unstructured...")
 print("\n  Loading Exercise 1 data (orders.parquet) for comparison...")
 
-orders_path = 'bronze/orders/orders.parquet'
+orders_path = 'orders/orders.parquet'
 try:
     response = s3_client.get_object(Bucket=BUCKET_NAME, Key=orders_path)
     orders_df = pd.read_parquet(BytesIO(response['Body'].read()))
