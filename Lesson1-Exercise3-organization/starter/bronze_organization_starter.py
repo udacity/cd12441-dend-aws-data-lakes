@@ -1,13 +1,14 @@
 """
-Exercise 3: Bronze Layer - Organization with Partitioning
+Exercise 3: Bronze Layer Organization - Structuring Raw Data
 Student Name: _______________
 Date: _______________
 
 Learning Objectives:
-- Organize bronze layer with hierarchical structure
-- Implement date partitioning for efficient queries
-- Track metadata for data lineage
-- Compare structured vs unstructured organization
+- Understand bronze layer organization principles
+- Implement proper directory structure for different data types
+- Add metadata and partitioning strategies
+- Compare organized vs unorganized bronze layers
+- Prepare data for silver layer processing
 
 Instructions:
 1. Complete the TODO sections marked with # TODO: 
@@ -17,142 +18,266 @@ Instructions:
 
 import pandas as pd
 import boto3
-from datetime import datetime
+import json
+import time
+import os
 from io import BytesIO
+from datetime import datetime
+
+# Configuration
+BUCKET_NAME = os.environ.get('BUCKET_NAME', 'lakehouse-lesson1-student-123456789')
+
+print("="*70)
+print("EXERCISE 3: BRONZE LAYER ORGANIZATION")
+print("="*70)
 
 # Initialize S3 client
-s3 = boto3.client('s3')
-bronze_bucket = 'swiftshop-lakehouse'
+print("\n[Step 1] Initializing AWS S3 Connection...")
+# TODO: Initialize S3 client
+s3_client = # YOUR CODE HERE
+print("✓ S3 client initialized")
 
-print("=== EXERCISE 3: BRONZE LAYER ORGANIZATION ===\n")
+# Step 2: Review current bronze layer structure
+print("\n[Step 2] Reviewing Current Bronze Layer Structure...")
+print(f"  Current structure (from Exercises 1 & 2):")
+print(f"""
+  s3://{BUCKET_NAME}/
+  ├── orders/              (Structured data - Parquet)
+  │   └── *.parquet
+  └── clickstream/         (Unstructured data - JSON → Parquet)
+      └── *.parquet
+""")
 
-# Step 1: Load Data from Bronze
-print("STEP 1: LOAD DATA FROM BRONZE LAYER")
-print("-" * 50)
+print("  ⚠️  Issues with current structure:")
+print("     • No partitioning (all data in one directory)")
+print("     • No metadata (ingestion time, source system)")
+print("     • No data type separation (raw vs processed)")
+print("     • Difficult to manage incremental loads")
 
-# TODO: Load orders from bronze
-orders_obj = s3.get_object(Bucket=bronze_bucket, Key='bronze/structured/orders/orders.parquet')
-orders_df = # YOUR CODE HERE
+# Step 3: Design organized bronze layer structure
+print("\n[Step 3] Designing Organized Bronze Layer Structure...")
+print("""
+  Recommended bronze layer organization:
 
-# TODO: Load clickstream from bronze
-clickstream_obj = s3.get_object(Bucket=bronze_bucket, Key='bronze/unstructured/clickstream/clickstream.parquet')
-clickstream_df = # YOUR CODE HERE
+  s3://{bucket}/
+  ├── structured/                    ← Data type separation
+  │   └── orders/                    ← Source system
+  │       ├── raw/                   ← Raw format preservation
+  │       │   └── date=2026-01-15/   ← Date partitioning
+  │       │       └── *.parquet
+  │       └── metadata.json          ← Dataset metadata
+  │
+  └── unstructured/                  ← Data type separation
+      └── clickstream/               ← Source system
+          ├── raw/                   ← Raw format preservation
+          │   └── date=2026-01-15/   ← Date partitioning
+          │       └── *.parquet
+          └── metadata.json          ← Dataset metadata
 
-print(f"Orders loaded: {len(orders_df)} records")
-print(f"Clickstream loaded: {len(clickstream_df)} records\n")
+  Benefits:
+  ✓ Clear data type separation (structured vs unstructured)
+  ✓ Source system identification (orders, clickstream)
+  ✓ Date partitioning for efficient queries
+  ✓ Metadata tracking (schema, lineage, quality)
+  ✓ Raw format preservation for audit trail
+""")
 
-# Step 2: Add Date Partition Column
-print("STEP 2: ADD DATE PARTITION COLUMNS")
-print("-" * 50)
+# Step 4: Reorganize structured data (orders)
+print("\n[Step 4] Reorganizing Structured Data (Orders)...")
 
-# TODO: Extract date from order_date for partitioning
-orders_df['partition_date'] = # YOUR CODE HERE (Hint: pd.to_datetime().dt.date)
+# Read existing orders data
+try:
+    # TODO: List all parquet files in orders directory
+    response = # YOUR CODE HERE
+    if 'Contents' not in response:
+        print("  ⚠️  No orders data found. Run Exercise 1 first.")
+        orders_df = None
+    else:
+        # TODO: Read the first parquet file found
+        orders_key = [obj['Key'] for obj in response['Contents'] if obj['Key'].endswith('.parquet')][0]
+        response = # YOUR CODE HERE
+        orders_df = # YOUR CODE HERE
+        print(f"  Loaded {len(orders_df):,} orders from existing bronze")
 
-# TODO: Extract date from timestamp for partitioning
-clickstream_df['partition_date'] = # YOUR CODE HERE
+        # TODO: Add metadata columns
+        orders_df['ingestion_timestamp'] = # YOUR CODE HERE
+        orders_df['source_system'] = # YOUR CODE HERE
+        orders_df['data_type'] = # YOUR CODE HERE
+        orders_df['ingestion_date'] = # YOUR CODE HERE (convert order_date to date)
 
-print("Partition columns added:")
-print(f"Orders date range: {orders_df['partition_date'].min()} to {orders_df['partition_date'].max()}")
-print(f"Clickstream date range: {clickstream_df['partition_date'].min()} to {clickstream_df['partition_date'].max()}")
-print(f"Unique dates in orders: {orders_df['partition_date'].nunique()}")
-print(f"Unique dates in clickstream: {clickstream_df['partition_date'].nunique()}\n")
+        # Group by date and write partitions
+        print(f"  Writing to organized structure with date partitions...")
+        start_time = time.time()
 
-# Step 3: Save with Partitioning
-print("STEP 3: SAVE WITH DATE PARTITIONING")
-print("-" * 50)
+        partition_count = 0
+        for date, group in orders_df.groupby('ingestion_date'):
+            partition_path = f'structured/orders/raw/date={date}/orders.parquet'
+            # TODO: Write partition to S3
+            buffer = BytesIO()
+            # YOUR CODE HERE
+            buffer.seek(0)
+            # YOUR CODE HERE
+            partition_count += 1
 
-# TODO: Group orders by partition_date and save each partition
-orders_partitions_saved = 0
-for date, group in orders_df.groupby('partition_date'):
-    # TODO: Create partition key with date
-    partition_key = f'bronze/structured/orders/date={date}/orders.parquet'
-    
-    # TODO: Save partition to S3
-    parquet_buffer = BytesIO()
-    # YOUR CODE HERE - save group to parquet_buffer
-    
-    # YOUR CODE HERE - upload to S3
-    
-    orders_partitions_saved += 1
+        write_time = time.time() - start_time
+        print(f"✓ Structured data reorganized in {write_time:.2f}s")
+        print(f"  Partitions created: {partition_count}")
+except Exception as e:
+    print(f"  ⚠️  Error reorganizing orders: {e}")
+    orders_df = None
 
-print(f"✓ Orders saved to {orders_partitions_saved} date partitions")
+# Step 5: Reorganize unstructured data (clickstream)
+print("\n[Step 5] Reorganizing Unstructured Data (Clickstream)...")
 
-# TODO: Group clickstream by partition_date and save each partition
-clickstream_partitions_saved = 0
-for date, group in clickstream_df.groupby('partition_date'):
-    # TODO: Create partition key with date
-    partition_key = f'bronze/unstructured/clickstream/date={date}/clickstream.parquet'
-    
-    # TODO: Save partition to S3
-    parquet_buffer = BytesIO()
+try:
+    # TODO: List all parquet files in clickstream directory
+    response = # YOUR CODE HERE
+    if 'Contents' not in response:
+        print("  ⚠️  No clickstream data found. Run Exercise 2 first.")
+        clickstream_df = None
+    else:
+        # TODO: Read the first parquet file found
+        clickstream_key = [obj['Key'] for obj in response['Contents'] if obj['Key'].endswith('.parquet')][0]
+        response = # YOUR CODE HERE
+        clickstream_df = # YOUR CODE HERE
+        print(f"  Loaded {len(clickstream_df):,} events from existing bronze")
+
+        # TODO: Add metadata columns
+        clickstream_df['ingestion_timestamp'] = # YOUR CODE HERE
+        clickstream_df['source_system'] = # YOUR CODE HERE
+        clickstream_df['data_type'] = # YOUR CODE HERE
+        clickstream_df['ingestion_date'] = # YOUR CODE HERE (convert timestamp to date)
+
+        # Group by date and write partitions
+        print(f"  Writing to organized structure with date partitions...")
+        start_time = time.time()
+
+        partition_count = 0
+        for date, group in clickstream_df.groupby('ingestion_date'):
+            partition_path = f'unstructured/clickstream/raw/date={date}/clickstream.parquet'
+            # TODO: Write partition to S3
+            buffer = BytesIO()
+            # YOUR CODE HERE
+            buffer.seek(0)
+            # YOUR CODE HERE
+            partition_count += 1
+
+        write_time = time.time() - start_time
+        print(f"✓ Unstructured data reorganized in {write_time:.2f}s")
+        print(f"  Partitions created: {partition_count}")
+except Exception as e:
+    print(f"  ⚠️  Error reorganizing clickstream: {e}")
+    clickstream_df = None
+
+# Step 6: Create metadata files
+print("\n[Step 6] Creating Metadata Files...")
+
+if orders_df is not None:
+    # TODO: Create orders metadata dictionary
+    orders_metadata = {
+        "dataset_name": "orders",
+        "data_type": "structured",
+        "source_system": "postgresql",
+        "format": "parquet",
+        "schema_version": "1.0",
+        "partitioning": "date",
+        "ingestion_frequency": "daily",
+        "row_count": # YOUR CODE HERE,
+        "columns": # YOUR CODE HERE,
+        "created_at": # YOUR CODE HERE
+    }
+    # TODO: Upload metadata to S3
     # YOUR CODE HERE
     
+    print(f"✓ Orders metadata: {orders_metadata['row_count']:,} rows, {orders_metadata['columns']} columns")
+
+if clickstream_df is not None:
+    # TODO: Create clickstream metadata dictionary
+    clickstream_metadata = {
+        "dataset_name": "clickstream",
+        "data_type": "unstructured",
+        "source_system": "web_analytics",
+        "format": "json_to_parquet",
+        "schema_version": "1.0",
+        "partitioning": "date",
+        "ingestion_frequency": "hourly",
+        "row_count": # YOUR CODE HERE,
+        "columns": # YOUR CODE HERE,
+        "nested_fields": ["metadata"],
+        "created_at": # YOUR CODE HERE
+    }
+    # TODO: Upload metadata to S3
     # YOUR CODE HERE
     
-    clickstream_partitions_saved += 1
+    print(f"✓ Clickstream metadata: {clickstream_metadata['row_count']:,} events, {clickstream_metadata['columns']} columns")
 
-print(f"✓ Clickstream saved to {clickstream_partitions_saved} date partitions\n")
+# Step 7: Demonstrate partition benefits
+print("\n[Step 7] Demonstrating Partition Benefits...")
+if orders_df is not None:
+    sample_date = orders_df['ingestion_date'].iloc[0]
+    print(f"  Querying single partition: date={sample_date}")
 
-# Step 4: Verify Partitioned Structure
-print("STEP 4: VERIFY PARTITIONED STRUCTURE")
-print("-" * 50)
+    start_time = time.time()
+    partition_path = f'structured/orders/raw/date={sample_date}/orders.parquet'
+    # TODO: Read partition from S3
+    response = # YOUR CODE HERE
+    partition_df = # YOUR CODE HERE
+    partition_time = time.time() - start_time
 
-# TODO: List objects in bronze/structured/orders/ to see partitions
-orders_response = s3.list_objects_v2(Bucket=bronze_bucket, Prefix='bronze/structured/orders/date=')
-orders_partitions = [obj['Key'] for obj in orders_response.get('Contents', [])]
+    print(f"✓ Partition query completed in {partition_time:.2f}s")
+    print(f"  Rows in partition: {len(partition_df):,}")
+    print(f"  Benefit: Only reads relevant partition, not entire dataset")
 
-# TODO: List objects in bronze/unstructured/clickstream/ to see partitions
-clickstream_response = s3.list_objects_v2(Bucket=bronze_bucket, Prefix='bronze/unstructured/clickstream/date=')
-clickstream_partitions = [obj['Key'] for obj in clickstream_response.get('Contents', [])]
+# Step 8: Compare organized vs unorganized
+print("\n[Step 8] Comparison: Organized vs Unorganized Bronze...")
 
-print("Bronze Layer Structure:")
-print(f"bronze/")
-print(f"├── structured/")
-print(f"│   └── orders/")
-print(f"│       └── date=YYYY-MM-DD/ ({len(orders_partitions)} partitions)")
-print(f"└── unstructured/")
-print(f"    └── clickstream/")
-print(f"        └── date=YYYY-MM-DD/ ({len(clickstream_partitions)} partitions)\n")
+print(f"""
+  📁 UNORGANIZED (Exercises 1 & 2):
+     Structure: Flat files
+     └── orders/orders.parquet
+     └── clickstream/clickstream.parquet
+     
+     Issues:
+     ✗ No partitioning → Must read entire file
+     ✗ No metadata → Unknown lineage
+     ✗ No data type separation → Hard to manage
+     ✗ No incremental load support
 
-# Step 5: Query Performance with Partitioning
-print("STEP 5: PARTITION PRUNING BENEFIT")
-print("-" * 50)
+  📁 ORGANIZED (Exercise 3):
+     Structure: Hierarchical with partitions
+     └── structured/orders/raw/date=2026-01-15/orders.parquet
+     └── unstructured/clickstream/raw/date=2026-01-15/clickstream.parquet
+     
+     Benefits:
+     ✓ Date partitioning → Efficient queries
+     ✓ Metadata tracking → Clear lineage
+     ✓ Data type separation → Easy management
+     ✓ Incremental load ready → Append new partitions
+""")
 
-# TODO: Calculate data size for a single date partition
-sample_date = orders_df['partition_date'].iloc[0]
-single_partition = orders_df[orders_df['partition_date'] == sample_date]
-all_data_size = len(orders_df)
-single_partition_size = len(single_partition)
+# Summary
+print("\n" + "="*70)
+print("EXERCISE 3 SUMMARY")
+print("="*70)
+print(f"\n📊 Bronze Layer Organization:")
+print(f"   • Structured data: s3://{BUCKET_NAME}/structured/orders/raw/")
+print(f"   • Unstructured data: s3://{BUCKET_NAME}/unstructured/clickstream/raw/")
+print(f"   • Partitioning: By ingestion_date")
+print(f"   • Metadata: Tracked for both datasets")
 
-# TODO: Calculate efficiency gain
-efficiency_gain = # YOUR CODE HERE (Hint: all_data_size / single_partition_size)
+print(f"\n✅ Key Improvements:")
+print(f"   1. Data type separation (structured vs unstructured)")
+print(f"   2. Date partitioning for efficient queries")
+print(f"   3. Metadata tracking for lineage and quality")
+print(f"   4. Incremental load support (append new partitions)")
+print(f"   5. Clear directory structure for easy navigation")
 
-print(f"Sample query: Orders for {sample_date}")
-print(f"Without partitioning: Scan {all_data_size} records")
-print(f"With partitioning: Scan {single_partition_size} records")
-print(f"Efficiency gain: {efficiency_gain:.1f}x faster\n")
+print(f"\n🎯 Benefits for Future Processing:")
+print(f"   • Partition pruning reduces processing time")
+print(f"   • Metadata enables quality checks")
+print(f"   • Clear structure simplifies ETL pipelines")
+print(f"   • Incremental processing becomes straightforward")
 
-# Step 6: Metadata Summary
-print("STEP 6: BRONZE LAYER METADATA SUMMARY")
-print("-" * 50)
-
-# TODO: Create metadata summary
-metadata_summary = {
-    'structured_records': len(orders_df),
-    'unstructured_records': len(clickstream_df),
-    'structured_partitions': orders_partitions_saved,
-    'unstructured_partitions': clickstream_partitions_saved,
-    'date_range_start': min(orders_df['partition_date'].min(), clickstream_df['partition_date'].min()),
-    'date_range_end': max(orders_df['partition_date'].max(), clickstream_df['partition_date'].max()),
-    'ingestion_timestamp': datetime.now()
-}
-
-print("Bronze Layer Metadata:")
-for key, value in metadata_summary.items():
-    print(f"  {key}: {value}")
-
-print("\n=== KEY TAKEAWAYS ===")
-print("✓ Date partitioning enables efficient query pruning")
-print("✓ Hierarchical structure separates structured/unstructured data")
-print("✓ Metadata tracking enables data lineage and auditing")
-print("✓ Bronze layer organization critical for downstream efficiency")
+print("\n" + "="*70)
+print("Lesson 1 Complete - Bronze Layer Organized!")
+print("="*70)
