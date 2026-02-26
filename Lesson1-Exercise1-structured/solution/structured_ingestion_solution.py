@@ -18,12 +18,13 @@ import pandas as pd
 import boto3
 import time
 import os
+import uuid
 from io import BytesIO
 
 # Configuration
-BUCKET_NAME = os.environ.get('BUCKET_NAME', 'lakehouse-lesson1-student-123456789')
-LOCAL_DATA_PATH = '/workspace/data/orders.parquet'
-S3_BRONZE_PATH = 'bronze/orders/orders.parquet'
+BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
+LOCAL_DATA_PATH = 'data/orders.parquet'
+S3_BRONZE_PATH = f'orders/orders-{uuid.uuid4()}.parquet'
 
 print("="*70)
 print("EXERCISE 1: BRONZE LAYER - STRUCTURED DATA INGESTION")
@@ -69,8 +70,35 @@ print(f"  Null order_value: {null_values:,} ({null_values/total_rows*100:.1f}%)"
 print(f"  Duplicate order_ids: {duplicates:,} ({duplicates/total_rows*100:.1f}%)")
 print("\n  ⚠️  These issues will be cleaned in later exercises (Silver layer)")
 
-# Step 6: Write to S3 bronze layer
-print(f"\n[Step 6] Writing to S3 Bronze Layer...")
+# Step 6: Create bucket in S3
+
+print("\n[Step 6] Create a new bucket for bronze layer ")
+
+# Verify if bucket already exists
+buckets = s3_client.list_buckets(
+    MaxBuckets=1,
+    Prefix="lakehouse-student-bronze-",
+    BucketRegion='us-east-1'
+)['Buckets']
+
+# Get name of bucket if already exists
+if buckets:
+    BUCKET_NAME = buckets[0]['Name']
+
+try:
+    s3_client.create_bucket(
+        ACL='private',
+        Bucket=BUCKET_NAME
+    )
+
+    print(f"S3 Bucket created: {BUCKET_NAME}")
+except s3_client.exceptions.BucketAlreadyExists:
+    print(f"S3 Bucket already exists: {BUCKET_NAME}")
+except Exception as e:
+    print(f"Error: {e}")
+
+# Step 7: Write to S3 bronze layer
+print(f"\n[Step 7] Writing to S3 Bronze Layer...")
 print(f"  Destination: s3://{BUCKET_NAME}/{S3_BRONZE_PATH}")
 print("  Strategy: Append-only (raw data preservation)")
 
@@ -84,8 +112,8 @@ write_time = time.time() - start_time
 
 print(f"✓ Data written to S3 in {write_time:.2f} seconds")
 
-# Step 7: Verify S3 write
-print("\n[Step 7] Verifying S3 Bronze Layer...")
+# Step 8: Verify S3 write
+print("\n[Step 8] Verifying S3 Bronze Layer...")
 # Read back from S3
 response = s3_client.get_object(Bucket=BUCKET_NAME, Key=S3_BRONZE_PATH)
 bronze_df = pd.read_parquet(BytesIO(response['Body'].read()))
@@ -114,6 +142,3 @@ print(f"   Structured data (Parquet) has explicit schema enforced at write time,
 print(f"   enabling fast, type-safe queries. Bronze layer stores raw data with")
 print(f"   all quality issues intact for downstream cleaning.")
 
-print("\n" + "="*70)
-print("Next: Exercise 2 - Unstructured Data (JSON)")
-print("="*70)

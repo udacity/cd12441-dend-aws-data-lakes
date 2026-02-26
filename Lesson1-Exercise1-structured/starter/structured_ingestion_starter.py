@@ -1,13 +1,11 @@
 """
 Exercise 1: Bronze Layer - Structured Data Ingestion
-Student Name: _______________
-Date: _______________
 
 Learning Objectives:
-- Load structured Parquet data from S3
-- Understand schema-on-write approach
-- Add metadata columns for tracking
-- Save to bronze layer with proper organization
+- Understand schema-on-write with structured data (Parquet)
+- Load data into bronze layer (raw, as-is ingestion)
+- Compare local vs S3 storage
+- Observe data quality issues in raw data
 
 Instructions:
 1. Complete the TODO sections marked with # TODO: 
@@ -17,82 +15,129 @@ Instructions:
 
 import pandas as pd
 import boto3
-from datetime import datetime
+import time
+import os
+import uuid
 from io import BytesIO
 
+# Configuration
+BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
+LOCAL_DATA_PATH = 'data/orders.parquet'
+S3_BRONZE_PATH = f'orders/orders-{uuid.uuid4()}.parquet'
+
+print("="*70)
+print("EXERCISE 1: BRONZE LAYER - STRUCTURED DATA INGESTION")
+print("="*70)
+
 # Initialize S3 client
-s3 = boto3.client('s3')
-source_bucket = 'swiftshop-data'
-bronze_bucket = 'swiftshop-lakehouse'
+print("\n[Step 1] Initializing AWS S3 Connection...")
+# TODO: Initialize S3 client
+s3_client = # YOUR CODE HERE
+print("✓ S3 client initialized")
 
-print("=== EXERCISE 1: BRONZE LAYER - STRUCTURED DATA ===\n")
+# Step 2: Load structured data (Parquet)
+print("\n[Step 2] Loading structured data (orders.parquet)...")
+print(f"  Source: {LOCAL_DATA_PATH}")
+print("  Format: Parquet (columnar, schema-on-write)")
 
-# Step 1: Load Structured Data
-print("STEP 1: LOAD STRUCTURED DATA (PARQUET)")
-print("-" * 50)
-
-# TODO: Load the Parquet file from S3
-# Hint: Use s3.get_object() and pd.read_parquet()
-parquet_obj = s3.get_object(Bucket=source_bucket, Key='raw/orders.parquet')
+start_time = time.time()
+# TODO: Load parquet file using pandas
 orders_df = # YOUR CODE HERE
+load_time = time.time() - start_time
 
-print("Structured Data Schema (Schema-on-Write):")
-# TODO: Print column names, data types, and shape
-print(f"Columns: {# YOUR CODE HERE}")
-print(f"Data types:\n{# YOUR CODE HERE}")
-print(f"Shape: {# YOUR CODE HERE}")
-print(f"Sample data:\n{orders_df.head(3)}\n")
+print(f"✓ Data loaded in {load_time:.2f} seconds")
+print(f"  Rows: {len(orders_df):,}")
+print(f"  Columns: {len(orders_df.columns)}")
 
-# Step 2: Add Metadata Columns
-print("STEP 2: ADD METADATA FOR TRACKING")
-print("-" * 50)
+# Step 3: Examine schema (schema-on-write)
+print("\n[Step 3] Examining Schema (Schema-on-Write)...")
+print("  Parquet enforces schema at write time - explicit data types:")
+# TODO: Print data types
+print(f"\n{# YOUR CODE HERE}")
 
-# TODO: Add metadata columns
-# - ingestion_timestamp: current datetime
-# - source_system: 'ecommerce_db'
-# - schema_version: '1.0'
-orders_df['ingestion_timestamp'] = # YOUR CODE HERE
-orders_df['source_system'] = # YOUR CODE HERE
-orders_df['schema_version'] = # YOUR CODE HERE
+# Step 4: Preview data
+print("\n[Step 4] Preview Sample Data...")
+# TODO: Print first 5 rows
+print(# YOUR CODE HERE)
 
-print("Metadata columns added:")
-print(f"New columns: {list(orders_df.columns[-3:])}")
-print(f"Sample with metadata:\n{orders_df[['order_id', 'ingestion_timestamp', 'source_system']].head(3)}\n")
+# Step 5: Data quality assessment (bronze = raw, as-is)
+print("\n[Step 5] Data Quality Assessment (Raw Bronze Layer)...")
+print("  Bronze layer contains data AS-IS with quality issues:")
 
-# Step 3: Save to Bronze Layer
-print("STEP 3: SAVE TO BRONZE LAYER")
-print("-" * 50)
+total_rows = len(orders_df)
+# TODO: Count null values in order_value column
+null_values = # YOUR CODE HERE
+# TODO: Count duplicate order_ids
+duplicates = # YOUR CODE HERE
 
-# TODO: Save to S3 bronze layer as Parquet
-# Path: s3://swiftshop-lakehouse/bronze/structured/orders/
-bronze_key = 'bronze/structured/orders/orders.parquet'
+print(f"\n  Total rows: {total_rows:,}")
+print(f"  Null order_value: {null_values:,} ({null_values/total_rows*100:.1f}%)")
+print(f"  Duplicate order_ids: {duplicates:,} ({duplicates/total_rows*100:.1f}%)")
+print("\n  ⚠️  These issues will be cleaned in later exercises (Silver layer)")
 
-# Convert to Parquet bytes
-parquet_buffer = BytesIO()
-# YOUR CODE HERE - save DataFrame to parquet_buffer
+# Step 6: Create bucket in S3
+print("\n[Step 6] Create a new bucket for bronze layer ")
 
-# Upload to S3
-# YOUR CODE HERE - use s3.put_object()
+# TODO: List existing buckets with prefix
+buckets = # YOUR CODE HERE
 
-print(f"✓ Data saved to s3://{bronze_bucket}/{bronze_key}")
-print(f"✓ Records saved: {len(orders_df)}")
-print(f"✓ Bronze layer ingestion complete!\n")
+# Get name of bucket if already exists
+if buckets:
+    BUCKET_NAME = buckets[0]['Name']
 
-# Step 4: Verification
-print("STEP 4: VERIFY BRONZE LAYER")
-print("-" * 50)
+try:
+    # TODO: Create S3 bucket
+    # YOUR CODE HERE
+    
+    print(f"S3 Bucket created: {BUCKET_NAME}")
+except s3_client.exceptions.BucketAlreadyExists:
+    print(f"S3 Bucket already exists: {BUCKET_NAME}")
+except Exception as e:
+    print(f"Error: {e}")
 
-# TODO: Read back from bronze layer to verify
-verify_obj = # YOUR CODE HERE
-verify_df = # YOUR CODE HERE
+# Step 7: Write to S3 bronze layer
+print(f"\n[Step 7] Writing to S3 Bronze Layer...")
+print(f"  Destination: s3://{BUCKET_NAME}/{S3_BRONZE_PATH}")
+print("  Strategy: Append-only (raw data preservation)")
 
-print(f"Verification:")
-print(f"Records in bronze: {len(verify_df)}")
-print(f"Metadata columns present: {all(col in verify_df.columns for col in ['ingestion_timestamp', 'source_system', 'schema_version'])}")
-print(f"Schema matches: {list(orders_df.columns) == list(verify_df.columns)}")
+start_time = time.time()
+# TODO: Write DataFrame to buffer as parquet
+buffer = BytesIO()
+# YOUR CODE HERE
+buffer.seek(0)
+# TODO: Upload to S3
+# YOUR CODE HERE
+write_time = time.time() - start_time
 
-print("\n=== KEY TAKEAWAYS ===")
-print("✓ Structured data has fixed schema (schema-on-write)")
-print("✓ Bronze layer preserves raw data with metadata")
-print("✓ Parquet format is efficient for structured data")
-print("✓ Metadata enables data lineage tracking")
+print(f"✓ Data written to S3 in {write_time:.2f} seconds")
+
+# Step 8: Verify S3 write
+print("\n[Step 8] Verifying S3 Bronze Layer...")
+# TODO: Read back from S3
+response = # YOUR CODE HERE
+bronze_df = # YOUR CODE HERE
+s3_row_count = len(bronze_df)
+
+print(f"✓ Verification successful")
+print(f"  Rows in S3: {s3_row_count:,}")
+print(f"  Match: {'✓' if s3_row_count == total_rows else '✗'}")
+
+# Summary
+print("\n" + "="*70)
+print("EXERCISE 1 SUMMARY")
+print("="*70)
+print(f"\n📊 Structured Data (Parquet):")
+print(f"   • Schema: Explicit, enforced at write time")
+print(f"   • Load time: {load_time:.2f}s")
+print(f"   • Write time: {write_time:.2f}s")
+print(f"   • Total rows: {total_rows:,}")
+print(f"\n🗂️  Bronze Layer Characteristics:")
+print(f"   • Raw data preserved as-is")
+print(f"   • Contains quality issues (nulls, duplicates)")
+print(f"   • Append-only strategy")
+print(f"   • Location: s3://{BUCKET_NAME}/{S3_BRONZE_PATH}")
+print(f"\n✅ Key Takeaway:")
+print(f"   Structured data (Parquet) has explicit schema enforced at write time,")
+print(f"   enabling fast, type-safe queries. Bronze layer stores raw data with")
+print(f"   all quality issues intact for downstream cleaning.")
+
