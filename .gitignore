@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Spark
+metastore_db/
+derby.log
+spark-warehouse/
+
+# Data files
+*.parquet
+*.csv
+*.json
+*.avro
+output/
+data/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# AWS
+.aws/
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Demos
+demos/

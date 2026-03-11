@@ -26,7 +26,7 @@ from io import BytesIO
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
 LOCAL_DATA_PATH = 'data/clickstream.json'
-S3_BRONZE_PATH = 'bronze/clickstream/clickstream.parquet'
+S3_BRONZE_PATH = 'clickstream/clickstream.parquet'
 
 print("="*70)
 print("EXERCISE 2: BRONZE LAYER - UNSTRUCTURED DATA INGESTION")
@@ -165,6 +165,3 @@ print(f"   when reading, not enforced when writing. This enables flexibility")
 print(f"   for nested structures and variable fields, but requires careful")
 print(f"   handling of schema evolution and data quality.")
 
-print("\n" + "="*70)
-print("Next: Exercise 3 - Bronze Layer Organization")
-print("="*70)

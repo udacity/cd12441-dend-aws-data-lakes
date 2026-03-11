@@ -24,7 +24,7 @@ from io import BytesIO
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
 LOCAL_DATA_PATH = 'data/orders.parquet'
-S3_BRONZE_PATH = f'orders/orders-{uuid.uuid4()}.parquet'
+S3_BRONZE_PATH = f'orders/orders.parquet'
 
 print("="*70)
 print("EXERCISE 1: BRONZE LAYER - STRUCTURED DATA INGESTION")
