@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Complete E-commerce Analytics Pipeline - Batch CDC + Real-time Streaming to Iceberg'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: ecommerce-analytics
+    Description: Project name for resource naming
+  
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev]
+    Description: Environment name
+
+Resources:
+  GlueETLRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-glue-etl-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: GlueETLS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - 'arn:aws:s3:::lakehouse-*'
+                  - 'arn:aws:s3:::lakehouse-*/*'
+        - PolicyName: GlueDataCatalogAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:GetDatabase
+                  - glue:GetTable
+                  - glue:GetPartitions
+                  - glue:UpdateTable
+                  - glue:CreateTable
+                  - glue:BatchCreatePartition
+                  - glue:BatchDeletePartition
+                Resource: '*'
+        - PolicyName: CloudWatchLogsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:*:*:/aws-glue/*'
+
+  GlueCrawlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-glue-crawler-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: GlueCrawlerS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - 'arn:aws:s3:::lakehouse-*'
+                  - 'arn:aws:s3:::lakehouse-*/*'
+        - PolicyName: S3TablesAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3tables:*
+                Resource: '*'
+
+  
+Outputs:
+    # Deployment User Information
+
+    GlueETLRoleArn:
+      Description: Glue ETL Role ARN (use for ETL jobs)
+      Value: !GetAtt GlueETLRole.Arn
+      Export:
+        Name: !Sub '${ProjectName}-glue-etl-role-arn'
+
+    GlueCrawlerRoleArn:
+      Description: Glue Crawler Role ARN (use for crawlers)
+      Value: !GetAtt GlueCrawlerRole.Arn

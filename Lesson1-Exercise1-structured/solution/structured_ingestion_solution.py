@@ -20,6 +20,9 @@ import time
 import os
 import uuid
 from io import BytesIO
+from dotenv import load_dotenv
+
+load_dotenv("/workspace/.env")
 
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
@@ -105,7 +108,7 @@ print("  Strategy: Append-only (raw data preservation)")
 start_time = time.time()
 # Write to buffer first, then upload to S3
 buffer = BytesIO()
-orders_df.to_parquet(buffer, index=False)
+orders_df.to_parquet(buffer, index=False, coerce_timestamps='ms', allow_truncated_timestamps=True)
 buffer.seek(0)
 s3_client.put_object(Bucket=BUCKET_NAME, Key=S3_BRONZE_PATH, Body=buffer.getvalue())
 write_time = time.time() - start_time

@@ -6,11 +6,22 @@ Verifies that Lesson 1 data exists and sets up Athena output location.
 
 import boto3
 import os
+import uuid
 
-BUCKET_NAME = os.environ.get('BUCKET_NAME')
+BUCKET_NAME = f"lakehouse-athena-{uuid.uuid4()}"
 REGION = 'us-east-1'
 
 s3 = boto3.client('s3', region_name=REGION)
+
+def create_bucket():
+    """Create new S3 bucket"""
+    print(f"\n[Step 0] Creating bucket: {BUCKET_NAME}...")
+    try:
+        s3.create_bucket(Bucket=BUCKET_NAME)
+        print(f"  ✓ Bucket created")
+    except Exception as e:
+        print(f"  ✗ Error: {e}")
+        exit(1)
 
 def verify_lesson1_data():
     """Verify Lesson 1 data exists"""
@@ -81,15 +92,14 @@ if __name__ == "__main__":
     print("LESSON 2 - EXERCISE 1: SETUP VERIFICATION")
     print("="*70)
     
-    if not BUCKET_NAME:
-        print("\n❌ Error: BUCKET_NAME environment variable not set")
-        print("   Run: export BUCKET_NAME='your-bucket-name'")
-        exit(1)
-    
     try:
+        create_bucket()
         data_exists = verify_lesson1_data()
         setup_athena_output()
         print_next_steps(data_exists)
+        
+        print(f"\n💾 Bucket name: {BUCKET_NAME}")
+        print(f"   Export for exercises: export BUCKET_NAME='{BUCKET_NAME}'")
         
         if not data_exists:
             exit(1)

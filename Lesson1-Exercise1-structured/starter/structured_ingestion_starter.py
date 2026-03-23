@@ -1,5 +1,6 @@
 """
 Exercise 1: Bronze Layer - Structured Data Ingestion
+Lesson 1: Introduction to Data Lakes and Lakehouses
 
 Learning Objectives:
 - Understand schema-on-write with structured data (Parquet)
@@ -19,6 +20,9 @@ import time
 import os
 import uuid
 from io import BytesIO
+from dotenv import load_dotenv
+
+load_dotenv("/workspace/.env")
 
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
@@ -76,6 +80,7 @@ print(f"  Duplicate order_ids: {duplicates:,} ({duplicates/total_rows*100:.1f}%)
 print("\n  ⚠️  These issues will be cleaned in later exercises (Silver layer)")
 
 # Step 6: Create bucket in S3
+
 print("\n[Step 6] Create a new bucket for bronze layer ")
 
 # TODO: List existing buckets with prefix
@@ -88,7 +93,7 @@ if buckets:
 try:
     # TODO: Create S3 bucket
     # YOUR CODE HERE
-    
+
     print(f"S3 Bucket created: {BUCKET_NAME}")
 except s3_client.exceptions.BucketAlreadyExists:
     print(f"S3 Bucket already exists: {BUCKET_NAME}")
@@ -140,4 +145,3 @@ print(f"\n✅ Key Takeaway:")
 print(f"   Structured data (Parquet) has explicit schema enforced at write time,")
 print(f"   enabling fast, type-safe queries. Bronze layer stores raw data with")
 print(f"   all quality issues intact for downstream cleaning.")
-

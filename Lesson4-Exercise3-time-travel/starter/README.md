@@ -4,142 +4,115 @@
 Use Iceberg time travel to query historical data and evolve table schemas without downtime.
 
 ## What You'll Learn
-- Query historical table versions
+- Query current and historical table versions
 - View table snapshot history
-- Add columns to existing tables
-- Compact small files for optimization
 - Compare data across versions
-- Understand schema evolution patterns
+- Add columns to existing tables (schema evolution)
+- Understand S3 Tables automatic compaction
 
 ## Prerequisites
-- Exercise 1 & 2 completed
-- Pre-configured AWS Glue 5.0 environment
-- Iceberg tables with multiple versions
-- Understanding of versioning concepts
+- Exercise 1 & 2 completed (silver_orders table with data)
+- AWS Glue 5.0 environment
+- Iceberg tables with at least one snapshot
 
 ## Step-by-Step Instructions
 
 ### Step 1: Query Current Version
 ```python
-current_data = spark.sql("SELECT * FROM s3tables_catalog.cloudmart_db.bronze_orders LIMIT 5")
+COLS = "order_id, user_id, product_id, order_value, order_date, status, processed_at"
+current_data = spark.sql(f"SELECT {COLS} FROM {TABLE} LIMIT 5")
 current_data.show()
 ```
 
-### Step 2: Query Historical Version
-Use `FOR VERSION AS OF` to query specific snapshot:
+### Step 2: Show Table History
 ```python
-historical_data = spark.sql("""
-SELECT * FROM s3tables_catalog.cloudmart_db.bronze_orders 
-FOR VERSION AS OF 1 
-LIMIT 5
-""")
-historical_data.show()
-```
-
-### Step 3: View Table History
-```python
-table_history = spark.sql("""
-SELECT snapshot_id, committed_at, summary 
-FROM s3tables_catalog.cloudmart_db.bronze_orders.history 
-ORDER BY committed_at DESC
+table_history = spark.sql(f"""
+SELECT snapshot_id, made_current_at, is_current_ancestor 
+FROM {TABLE}.history 
+ORDER BY made_current_at DESC
 """)
 table_history.show()
 ```
 
-### Step 4: Schema Evolution
-Add new column without downtime:
+### Step 3: Query Historical Version
+Get the first snapshot ID and query it:
 ```python
-spark.sql("""
-ALTER TABLE s3tables_catalog.cloudmart_db.bronze_orders 
-ADD COLUMN customer_segment string
+first_snapshot = spark.sql(f"""
+SELECT snapshot_id FROM {TABLE}.history 
+ORDER BY made_current_at ASC LIMIT 1
+""").collect()[0][0]
+
+historical_data = spark.sql(f"""
+SELECT {COLS} FROM {TABLE} 
+FOR VERSION AS OF {first_snapshot} 
+LIMIT 5
 """)
 ```
 
-### Step 5: Optimize Table
-Compact small files:
+### Step 4: Compare Versions
 ```python
-spark.sql("CALL s3tables_catalog.system.rewrite_data_files('cloudmart_db.bronze_orders')")
+current_stats = spark.sql(f"""
+    SELECT COUNT(*) as cnt, AVG(order_value) as avg_val FROM {TABLE}
+""").collect()[0]
+
+historical_stats = spark.sql(f"""
+    SELECT COUNT(*) as cnt, AVG(order_value) as avg_val 
+    FROM {TABLE} FOR VERSION AS OF {first_snapshot}
+""").collect()[0]
 ```
 
-Update statistics:
+### Step 5: Schema Evolution
+Add a new column without downtime:
 ```python
-spark.sql("ANALYZE TABLE s3tables_catalog.cloudmart_db.bronze_orders COMPUTE STATISTICS")
+spark.sql(f"ALTER TABLE {TABLE} ADD COLUMN customer_segment STRING")
 ```
 
-### Step 6: Compare Versions
-```python
-comparison = spark.sql("""
-WITH current_stats AS (
-    SELECT COUNT(*) as current_count FROM s3tables_catalog.cloudmart_db.bronze_orders
-),
-historical_stats AS (
-    SELECT COUNT(*) as historical_count 
-    FROM s3tables_catalog.cloudmart_db.bronze_orders FOR VERSION AS OF 1
-)
-SELECT current_count, historical_count, current_count - historical_count as growth
-FROM current_stats, historical_stats
-""")
-comparison.show()
-```
+### Step 6: Automatic Compaction
+S3 Tables handles file compaction automatically — no manual `rewrite_data_files` needed.
 
-## Understanding Time Travel
-- **Snapshots**: Immutable table versions
-- **Version AS OF**: Query specific snapshot
-- **Timestamp AS OF**: Query at specific time
-- **History**: View all snapshots
+## Configuration
+The starter uses this Spark/Iceberg configuration:
+```python
+TABLE = "swiftshop.silver_orders"
+
+spark = SparkSession.builder \
+    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+    .config("spark.sql.defaultCatalog", "s3tables") \
+    .config("spark.sql.catalog.s3tables.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
+    .config("spark.sql.catalog.s3tables.glue.id", "ACCOUNT_ID:s3tablescatalog/swiftshop-analytics-tables") \
+    .getOrCreate()
+```
 
 ## Expected Output
 ```
 === TIME TRAVEL AND SCHEMA EVOLUTION ===
 
 Current version:
-+--------+-------+----------+-----------+
-|order_id|user_id|product_id|order_value|
-+--------+-------+----------+-----------+
-|1       |user_45|prod_12   |125.50     |
-
-Historical version (v1):
-+--------+-------+----------+-----------+
-|order_id|user_id|product_id|order_value|
-+--------+-------+----------+-----------+
-|1       |user_45|prod_12   |100.00     |
++--------+-------+----------+-----------+-------------------+------+-------------------+
+|order_id|user_id|product_id|order_value|         order_date|status|       processed_at|
++--------+-------+----------+-----------+-------------------+------+-------------------+
 
 Table history:
-+-----------+-------------------+
-|snapshot_id|committed_at       |
-+-----------+-------------------+
-|123456789  |2024-01-15 10:30:00|
-|123456788  |2024-01-15 09:00:00|
++-----------+-------------------+--------------------+
+|snapshot_id|   made_current_at |is_current_ancestor |
++-----------+-------------------+--------------------+
 
 Growth analysis:
-+-------------+----------------+------+
-|current_count|historical_count|growth|
-+-------------+----------------+------+
-|1100         |1000            |100   |
-```
+  Current count: 9480, Historical count: 9480, Growth: 0
+  Current avg: 254.32, Historical avg: 254.32
 
-## Verification
-```sql
--- Query specific version
-SELECT * FROM s3tables_catalog.cloudmart_db.bronze_orders FOR VERSION AS OF 1;
-
--- Query at timestamp
-SELECT * FROM s3tables_catalog.cloudmart_db.bronze_orders 
-FOR TIMESTAMP AS OF '2024-01-15 09:00:00';
-
--- View schema
-DESCRIBE s3tables_catalog.cloudmart_db.bronze_orders;
+✓ Column 'customer_segment' added
+✓ S3 Tables handles file compaction automatically
 ```
 
 ## Common Issues
-- **Version not found**: Check snapshot_id in history
-- **Schema mismatch**: Old versions don't have new columns
-- **Performance**: Compact files regularly
+- **Version not found**: Check snapshot_id from `.history` table
+- **Schema mismatch**: Old versions don't have new columns (returns NULL)
+- **Column already exists**: ALTER TABLE ADD COLUMN will error if column exists
 
 ## Success Criteria
-✅ Current version queried  
-✅ Historical version accessed  
-✅ Table history displayed  
-✅ Schema evolved successfully  
-✅ Files compacted  
+✅ Current version queried
+✅ Table history displayed
+✅ Historical version accessed via snapshot_id
 ✅ Version comparison completed
+✅ Schema evolved (column added)

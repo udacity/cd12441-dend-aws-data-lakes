@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IAM Role for AWS Glue ETL Jobs with Iceberg support'
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Default: swiftshop-data-lake
+    Description: S3 bucket name for data lake
+  BronzeBucketName:
+    Type: String
+    Default: lakehouse-student-bronze-ae1254b1-cafe-479b-bce5-acb312f6d1c0
+    Description: S3 bucket name for bronze data
+
+Resources:
+  GlueETLRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: GlueIcebergETLRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: S3DataLakeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${S3BucketName}'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+                  - !Sub 'arn:aws:s3:::${BronzeBucketName}'
+                  - !Sub 'arn:aws:s3:::${BronzeBucketName}/*'
+        - PolicyName: GlueDataCatalogAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:GetDatabase
+                  - glue:GetDatabases
+                  - glue:GetTable
+                  - glue:GetTables
+                  - glue:GetPartitions
+                  - glue:UpdateTable
+                  - glue:CreateTable
+                  - glue:CreateDatabase
+                  - glue:BatchCreatePartition
+                  - glue:BatchDeletePartition
+                  - glue:GetCatalog
+                  - glue:GetCatalogs
+                Resource: '*'
+        - PolicyName: LakeFormationAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lakeformation:GetDataAccess
+                Resource: '*'
+        - PolicyName: S3TablesAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3tables:*
+                Resource: '*'
+        - PolicyName: CloudWatchLogsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:*:*:/aws-glue/*'
+
+Outputs:
+  GlueRoleArn:
+    Description: ARN of the Glue ETL role
+    Value: !GetAtt GlueETLRole.Arn
+    Export:
+      Name: GlueIcebergETLRoleArn
+  
+  GlueRoleName:
+    Description: Name of the Glue ETL role
+    Value: !Ref GlueETLRole

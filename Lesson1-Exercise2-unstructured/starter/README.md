@@ -1,67 +1,78 @@
 # Exercise 2: Unstructured Data Ingestion - Student Instructions
 
 ## Objective
-Load unstructured JSON data from S3 into the bronze layer, understanding schema-on-read principles.
+Load unstructured JSON data into the bronze layer, understanding schema-on-read principles.
 
 ## What You'll Learn
-- Load JSON lines format from S3
+- Load JSON lines format using pandas
 - Understand schema-on-read (schema inferred at read time)
-- Handle nested JSON structures
-- Flatten nested data for analysis
+- Handle nested JSON structures with `json_normalize`
+- Identify variable/optional fields
 - Compare structured vs unstructured approaches
 
 ## Prerequisites
 - Exercise 1 completed
 - Pre-configured Docker container with all dependencies
-- Sample data: `clickstream.json` available in source S3 bucket
-- All Python packages pre-installed
+- Sample data: `data/clickstream.json` available locally
+- All Python packages (boto3, pandas, python-dotenv) pre-installed
 
 ## Step-by-Step Instructions
 
-### Step 1: Load JSON Lines from S3
-Parse JSON lines file:
+### Step 1: Initialize S3 Client
 ```python
-json_obj = s3.get_object(Bucket=source_bucket, Key='raw/clickstream.json')
-json_content = json_obj['Body'].read().decode('utf-8')
-raw_logs = [json.loads(line) for line in json_content.strip().split('\n')]
+s3_client = boto3.client('s3')
 ```
 
-### Step 2: Examine JSON Structure
-Inspect the nested structure:
+### Step 2: Load JSON Lines
 ```python
-print(f"Sample record keys: {raw_logs[0].keys()}")
-print(f"Sample record:\n{json.dumps(raw_logs[0], indent=2)}")
+clickstream_df = pd.read_json(LOCAL_DATA_PATH, lines=True)
 ```
 
-### Step 3: Flatten Nested JSON
-Extract nested fields:
+### Step 3: Examine Inferred Schema
 ```python
-flattened_data = []
-for log in raw_logs:
-    flat_record = {
-        'event_id': log['event_id'],
-        'user_id': log['user_id'],
-        'event_type': log['event_type'],
-        'timestamp': log['timestamp'],
-        'browser': log.get('metadata', {}).get('browser'),
-        'device': log.get('metadata', {}).get('device'),
-        'product_id': log.get('product_id')  # Optional field
-    }
-    flattened_data.append(flat_record)
-
-clickstream_df = pd.DataFrame(flattened_data)
+clickstream_df.dtypes.to_string()
 ```
 
-### Step 4: Save to Bronze Layer
-Write as Parquet:
+### Step 4: Preview Data
 ```python
-parquet_buffer = BytesIO()
-clickstream_df.to_parquet(parquet_buffer, index=False)
-s3.put_object(
-    Bucket=bronze_bucket,
-    Key='bronze/unstructured/clickstream/clickstream.parquet',
-    Body=parquet_buffer.getvalue()
-)
+clickstream_df.head(5).to_string()
+```
+
+### Step 5: Expand Nested Metadata
+Use `json_normalize` to flatten the nested `metadata` column:
+```python
+metadata_df = pd.json_normalize(clickstream_df['metadata'])
+clickstream_expanded['browser'] = metadata_df['browser']
+clickstream_expanded['device'] = metadata_df['device']
+clickstream_expanded['referrer'] = metadata_df['referrer']
+```
+
+### Step 6: Identify Variable Fields
+Count events with and without `product_id`:
+```python
+with_product = clickstream_df['product_id'].notna().sum()
+without_product = clickstream_df['product_id'].isna().sum()
+```
+
+### Step 7: Write to S3
+```python
+buffer = BytesIO()
+clickstream_df.to_parquet(buffer, index=False)
+buffer.seek(0)
+s3_client.put_object(Bucket=BUCKET_NAME, Key=S3_BRONZE_PATH, Body=buffer.getvalue())
+```
+
+### Step 8: Verify S3 Write
+```python
+response = s3_client.get_object(Bucket=BUCKET_NAME, Key=S3_BRONZE_PATH)
+bronze_df = pd.read_parquet(BytesIO(response['Body'].read()))
+```
+
+### Step 9: Compare with Exercise 1
+Load orders data from S3 and compare structured vs unstructured:
+```python
+response = s3_client.get_object(Bucket=BUCKET_NAME, Key='orders/orders.parquet')
+orders_df = pd.read_parquet(BytesIO(response['Body'].read()))
 ```
 
 ## Understanding Schema-on-Read
@@ -80,36 +91,28 @@ s3.put_object(
 
 ## Expected Output
 ```
-=== EXERCISE 2: BRONZE LAYER - UNSTRUCTURED DATA ===
+[Step 2] Loading unstructured data (clickstream.json)...
+✓ Data loaded in 0.12 seconds
+  Events: 5,000
+  Columns: 7
 
-STEP 1: LOAD UNSTRUCTURED DATA (JSON)
-Sample record keys: dict_keys(['event_id', 'user_id', 'event_type', 'timestamp', 'metadata', 'product_id'])
-Sample record:
-{
-  "event_id": "evt_001",
-  "user_id": "user_123",
-  "event_type": "page_view",
-  "timestamp": "2024-01-15T10:30:00",
-  "metadata": {
-    "browser": "Chrome",
-    "device": "mobile"
-  }
-}
+[Step 6] Schema Flexibility - Variable Fields...
+  Events with product_id: 3,500 (70.0%)
+  Events without product_id: 1,500 (30.0%)
 
-STEP 2: FLATTEN NESTED JSON (SCHEMA-ON-READ)
-Flattened columns: ['event_id', 'user_id', 'event_type', 'timestamp', 'browser', 'device', 'product_id']
-
-STEP 3: SAVE TO BRONZE LAYER
-✓ Data saved to bronze/unstructured/clickstream/clickstream.parquet
+[Step 8] Verifying S3 Bronze Layer...
+✓ Verification successful
+  Match: ✓
 ```
 
 ## Common Issues
 - **JSON parse error**: Check for malformed JSON
-- **Missing nested fields**: Use `.get()` with defaults
-- **Variable fields**: Handle optional fields gracefully
+- **Missing nested fields**: Use `json_normalize` for nested dicts
+- **Variable fields**: Handle optional fields with `.notna()`
 
 ## Success Criteria
-✅ JSON lines parsed successfully  
-✅ Nested structure flattened  
-✅ Variable fields handled  
+✅ JSON lines parsed successfully
+✅ Nested structure expanded with json_normalize
+✅ Variable fields identified
 ✅ Data saved to bronze layer
+✅ Comparison with structured data completed

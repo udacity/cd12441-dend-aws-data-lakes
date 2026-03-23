@@ -20,7 +20,8 @@ HINTS:
 """
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import *
+from pyspark.sql.functions import col, countDistinct, sum, count, avg, max, datediff, current_date, date_sub, when, round, lit, desc
+from pyspark.sql.window import Window
 import time
 
 spark = SparkSession.builder \
@@ -29,6 +30,8 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 print("=== GOLD LAYER: BUSINESS METRICS ===\n")
+
+start_time = time.time()
 
 # Load silver data (assume these exist from previous exercises)
 silver_orders = spark.read.parquet("data/silver_orders.parquet")
@@ -42,23 +45,24 @@ silver_clicks = spark.read.parquet("data/silver_clicks.parquet")
 gold_product_daily = None  # YOUR CODE HERE
 
 # TODO: Task 2 - Top 10 Products (Last 30 Days)
-# Filter to last 30 days
+# Filter to last 30 days using date_sub(current_date(), 30)
 # Group by product_id, sum revenue
 # Order by revenue desc, limit 10
 
 gold_top_products = None  # YOUR CODE HERE
 
 # TODO: Task 3 - Conversion Rate
-# Count distinct user_ids who clicked
-# Count distinct user_ids who ordered
-# Calculate conversion_rate = orders / clicks
+# Count distinct user_ids who clicked (from silver_clicks)
+# Count distinct customer_ids who ordered (from silver_orders, status = 'completed')
+# Calculate conversion_rate = (unique_buyers / unique_clickers) * 100
 
 gold_conversion = None  # YOUR CODE HERE
 
 # TODO: Task 4 - Customer Lifetime Value
 # Group by customer_id
 # Calculate: total_revenue, total_orders, avg_order_value
-# Filter: exclude test users (customer_id NOT LIKE 'test_%')
+# Filter: exclude test users (customer_id NOT LIKE 'test_%'), status = 'completed'
+# Order by total_revenue desc
 
 gold_customer_ltv = None  # YOUR CODE HERE
 
@@ -68,6 +72,8 @@ gold_customer_ltv = None  # YOUR CODE HERE
 # Filter: days_since_last_order > 90
 
 gold_churned = None  # YOUR CODE HERE
+
+agg_time = time.time() - start_time
 
 # Display results
 if gold_product_daily:
@@ -83,11 +89,16 @@ if gold_conversion:
     gold_conversion.show()
 
 if gold_customer_ltv:
-    print("\nCustomer Lifetime Value:")
+    print("\nCustomer Lifetime Value (Top 5):")
     gold_customer_ltv.show(5)
 
 if gold_churned:
     print(f"\nChurned Customers: {gold_churned.count()}")
     gold_churned.show(5)
+
+print(f"\nGold Aggregation Time: {agg_time:.3f}s")
+
+# Optional: Save gold tables
+# YOUR CODE HERE
 
 spark.stop()

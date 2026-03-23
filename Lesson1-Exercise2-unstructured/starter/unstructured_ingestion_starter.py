@@ -22,10 +22,14 @@ import os
 import uuid
 from io import BytesIO
 
+from dotenv import load_dotenv
+
+load_dotenv("/workspace/.env")
+
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
 LOCAL_DATA_PATH = 'data/clickstream.json'
-S3_BRONZE_PATH = 'bronze/clickstream/clickstream.parquet'
+S3_BRONZE_PATH = 'clickstream/clickstream.parquet'
 
 print("="*70)
 print("EXERCISE 2: BRONZE LAYER - UNSTRUCTURED DATA INGESTION")
@@ -125,7 +129,7 @@ print(f"  Match: {'✓' if s3_row_count == total else '✗'}")
 print("\n[Step 9] Comparison: Structured vs Unstructured...")
 print("\n  Loading Exercise 1 data (orders.parquet) for comparison...")
 
-orders_path = 'bronze/orders/orders.parquet'
+orders_path = 'orders/orders.parquet'
 try:
     # TODO: Load orders data from S3
     response = # YOUR CODE HERE
@@ -173,4 +177,3 @@ print(f"   Unstructured data (JSON) uses schema-on-read - schema is inferred")
 print(f"   when reading, not enforced when writing. This enables flexibility")
 print(f"   for nested structures and variable fields, but requires careful")
 print(f"   handling of schema evolution and data quality.")
-

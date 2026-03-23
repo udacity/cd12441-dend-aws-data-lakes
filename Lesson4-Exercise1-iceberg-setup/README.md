@@ -1,45 +1,43 @@
-# Exercise 1: Iceberg Table Setup with S3 Tables
+# Exercise 1: S3 Tables Setup with Native Iceberg Support
 
 ## Overview
-Configure AWS Glue 5.0 with Apache Iceberg and create S3 Tables for ACID transaction support.
+Create and manage Amazon S3 Tables using boto3 and query with Athena. Learn S3 Tables' built-in Iceberg support and automated optimization.
 
 ## Learning Objectives
-- Configure Spark for Iceberg integration
-- Create Iceberg tables with partitioning
-- Load data into Iceberg format
-- Understand S3 Tables architecture
-- Set table properties for optimization
+- Create S3 table buckets using boto3
+- Create namespaces and tables via API
+- Understand S3 Tables vs traditional Iceberg
+- Query tables with Athena
+- Leverage automated maintenance features
 
 ## Prerequisites
-- AWS Glue 5.0 (Spark 3.5, 10+ DPU)
-- Lake Formation configured (see setup/lake_formation_setup.md)
-- S3 Tables bucket created
-- Bronze layer data in S3
+- boto3 installed
+- IAM permissions for s3tables:* actions
+- Sample data in S3 (optional)
 
 ## Directory Structure
 ```
 Lesson4-Exercise1-iceberg-setup/
 ├── README.md                    # This file
 ├── setup/
-│   └── lake_formation_setup.md # Lake Formation configuration
+│   └── s3_tables_setup.py      # Create table bucket and namespace
 ├── starter/
 │   ├── README.md               # Student instructions
-│   └── iceberg_setup_starter.py
+│   └── create_table.sql        # Athena SQL to create table
 └── solution/
-    └── iceberg_setup_solution.py
+    └── create_table.sql        # Complete SQL solution
 ```
 
 ## Instructions
-1. Complete Lake Formation setup from `setup/lake_formation_setup.md`
-2. Start with `starter/iceberg_setup_starter.py`
-3. Read detailed instructions in `starter/README.md`
-4. Complete all TODO sections
-5. Deploy as AWS Glue 5.0 ETL job
-6. Verify table in Athena
+1. Run `python setup/s3_tables_setup.py` to create table bucket
+2. Open Athena console
+3. Use SQL from `starter/create_table.sql` to create table
+4. Load data with INSERT or COPY
+5. Query and verify automated optimization
 
 ## Expected Outcomes
-- Iceberg extensions configured
-- Database created in S3 Tables catalog
-- Iceberg table with partitioning
+- S3 table bucket created with boto3
+- Namespace and table created
 - Data loaded successfully
-- Table queryable in Athena
+- Table queryable with 3x faster performance
+- Automated maintenance enabled (no manual work)

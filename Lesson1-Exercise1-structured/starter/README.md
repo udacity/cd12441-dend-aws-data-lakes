@@ -1,55 +1,77 @@
 # Exercise 1: Structured Data Ingestion - Student Instructions
 
 ## Objective
-Load structured Parquet data from S3 into the bronze layer, understanding schema-on-write principles.
+Load structured Parquet data into the bronze layer, understanding schema-on-write principles.
 
 ## What You'll Learn
-- Load Parquet files from S3 using boto3 and pandas
+- Load Parquet files using pandas
 - Understand schema-on-write (schema enforced at write time)
-- Add metadata columns for data lineage tracking
-- Save data to bronze layer with proper organization
+- Assess data quality in raw bronze data
+- Create S3 buckets and upload data
+- Verify data integrity after S3 write
 
 ## Prerequisites
 - Pre-configured Docker container with all dependencies installed
 - AWS credentials already configured in environment
-- Sample data: `orders.parquet` available in source S3 bucket
-- All Python packages (boto3, pandas, pyarrow) pre-installed
+- Sample data: `data/orders.parquet` available locally
+- All Python packages (boto3, pandas, pyarrow, python-dotenv) pre-installed
 
 ## Step-by-Step Instructions
 
-### Step 1: Load Parquet from S3
-Complete the data loading:
+### Step 1: Initialize S3 Client
 ```python
-parquet_obj = s3.get_object(Bucket=source_bucket, Key='raw/orders.parquet')
-orders_df = pd.read_parquet(BytesIO(parquet_obj['Body'].read()))
+s3_client = boto3.client('s3')
 ```
 
-### Step 2: Examine Schema
-Print schema information:
+### Step 2: Load Parquet Data
 ```python
-print(f"Columns: {orders_df.columns.tolist()}")
-print(f"Data types:\n{orders_df.dtypes}")
-print(f"Shape: {orders_df.shape}")
+orders_df = pd.read_parquet(LOCAL_DATA_PATH)
 ```
 
-### Step 3: Add Metadata Columns
-Add tracking columns:
+### Step 3: Examine Schema
+Print the DataFrame's data types:
 ```python
-orders_df['ingestion_timestamp'] = datetime.now()
-orders_df['source_system'] = 'swiftshop-orders'
-orders_df['source_file'] = 'raw/orders.parquet'
+orders_df.dtypes.to_string()
 ```
 
-### Step 4: Save to Bronze Layer
-Write to S3 bronze layer:
+### Step 4: Preview Data
 ```python
-parquet_buffer = BytesIO()
-orders_df.to_parquet(parquet_buffer, index=False)
-s3.put_object(
-    Bucket=bronze_bucket,
-    Key='bronze/structured/orders/orders.parquet',
-    Body=parquet_buffer.getvalue()
-)
+orders_df.head(5).to_string()
+```
+
+### Step 5: Data Quality Assessment
+Count nulls and duplicates:
+```python
+null_values = orders_df['order_value'].isna().sum()
+duplicates = orders_df.duplicated(subset=['order_id']).sum()
+```
+
+### Step 6: Create S3 Bucket
+List existing buckets and create if needed:
+```python
+buckets = s3_client.list_buckets(
+    MaxBuckets=1,
+    Prefix="lakehouse-student-bronze-",
+    BucketRegion='us-east-1'
+)['Buckets']
+
+s3_client.create_bucket(ACL='private', Bucket=BUCKET_NAME)
+```
+
+### Step 7: Write to S3
+Write DataFrame to buffer and upload:
+```python
+buffer = BytesIO()
+orders_df.to_parquet(buffer, index=False, coerce_timestamps='ms', allow_truncated_timestamps=True)
+buffer.seek(0)
+s3_client.put_object(Bucket=BUCKET_NAME, Key=S3_BRONZE_PATH, Body=buffer.getvalue())
+```
+
+### Step 8: Verify S3 Write
+Read back from S3 and compare row counts:
+```python
+response = s3_client.get_object(Bucket=BUCKET_NAME, Key=S3_BRONZE_PATH)
+bronze_df = pd.read_parquet(BytesIO(response['Body'].read()))
 ```
 
 ## Understanding Schema-on-Write
@@ -60,38 +82,33 @@ s3.put_object(
 
 ## Expected Output
 ```
-=== EXERCISE 1: BRONZE LAYER - STRUCTURED DATA ===
+[Step 2] Loading structured data (orders.parquet)...
+✓ Data loaded in 0.05 seconds
+  Rows: 10,000
+  Columns: 6
 
-STEP 1: LOAD STRUCTURED DATA (PARQUET)
-Columns: ['order_id', 'user_id', 'order_date', 'order_value', 'status']
-Data types:
-order_id         int64
-user_id         object
-order_date      object
-order_value    float64
-status          object
-Shape: (1000, 5)
+[Step 5] Data Quality Assessment (Raw Bronze Layer)...
+  Total rows: 10,000
+  Null order_value: 520 (5.2%)
+  Duplicate order_ids: 210 (2.1%)
 
-STEP 2: ADD METADATA FOR TRACKING
-Metadata columns added: ingestion_timestamp, source_system, source_file
+[Step 7] Writing to S3 Bronze Layer...
+✓ Data written to S3
 
-STEP 3: SAVE TO BRONZE LAYER
-✓ Data saved to bronze/structured/orders/orders.parquet
-```
-
-## Verification
-Check S3 for the file:
-```bash
-aws s3 ls s3://swiftshop-lakehouse/bronze/structured/orders/
+[Step 8] Verifying S3 Bronze Layer...
+✓ Verification successful
+  Match: ✓
 ```
 
 ## Common Issues
 - **S3 access denied**: Check IAM permissions
 - **Parquet read error**: Verify file format
-- **Memory error**: File too large for pandas
+- **BucketAlreadyExists**: Bucket names are globally unique
 
 ## Success Criteria
-✅ Parquet file loaded successfully  
-✅ Schema displayed correctly  
-✅ Metadata columns added  
+✅ Parquet file loaded successfully
+✅ Schema displayed correctly
+✅ Data quality issues identified (nulls, duplicates)
+✅ S3 bucket created
 ✅ Data saved to bronze layer in S3
+✅ Verification confirms row count match

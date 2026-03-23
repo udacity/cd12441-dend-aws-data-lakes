@@ -23,6 +23,10 @@ import os
 import uuid
 from io import BytesIO
 
+from dotenv import load_dotenv
+
+load_dotenv("/workspace/.env")
+
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
 LOCAL_DATA_PATH = 'data/clickstream.json'

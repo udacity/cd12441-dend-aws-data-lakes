@@ -1,103 +1,99 @@
-# Exercise 2: ACID Transactions and MERGE Operations - Student Instructions
+# Exercise 2: Bronze to Silver ETL with ACID Transactions - Student Instructions
 
 ## Objective
-Implement ACID transactions using Iceberg MERGE operations for CDC processing.
+Implement a Bronze to Silver ETL pipeline using PySpark on AWS Glue with Iceberg tables in S3 Tables.
 
 ## What You'll Learn
-- Execute MERGE statements in Iceberg
-- Handle CDC updates with UPSERT logic
-- Implement ACID transaction guarantees
-- Process incremental updates efficiently
-- Understand MERGE performance optimization
+- Read bronze Parquet data from S3
+- Apply ETL transformations (null handling, data cleaning, column renaming)
+- Write to Iceberg tables in S3 Tables
+- Configure Spark with Iceberg catalog extensions
 
 ## Prerequisites
-- Exercise 1 completed (Iceberg tables created)
-- Pre-configured AWS Glue 5.0 environment
-- Understanding of CDC patterns
-- Knowledge of SQL MERGE syntax
-- CDC update data available in S3
+- Exercise 1 completed (S3 table bucket and silver_orders table created)
+- AWS Glue 5.0 environment
+- Bronze data available in S3 (from Lesson 1)
 
 ## Step-by-Step Instructions
 
-### Step 1: Create Silver Table
+### Step 1: Configure Spark for Iceberg
+The starter code includes the SparkSession configuration:
 ```python
-spark.sql("""
-CREATE TABLE IF NOT EXISTS s3tables_catalog.cloudmart_db.silver_orders (
-    order_id bigint,
-    user_id string,
-    product_id string,
-    order_value double,
-    order_date timestamp,
-    updated_at timestamp,
-    status string
-) USING iceberg 
-PARTITIONED BY (days(order_date))
-""")
+spark = SparkSession.builder \
+    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+    .config("spark.sql.defaultCatalog", "s3tables") \
+    .config("spark.sql.catalog.s3tables", "org.apache.iceberg.spark.SparkCatalog") \
+    .config("spark.sql.catalog.s3tables.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
+    .config("spark.sql.catalog.s3tables.glue.id", "ACCOUNT_ID:s3tablescatalog/swiftshop-analytics-tables") \
+    .config("spark.sql.catalog.s3tables.warehouse", "s3://swiftshop-analytics-tables/bucket/swiftshop-analytics-tables") \
+    .getOrCreate()
 ```
 
-### Step 2: Read CDC Updates
+### Step 2: Read Bronze Data
 ```python
-updates_df = glueContext.create_dynamic_frame.from_options(
-    connection_type="s3",
-    connection_options={"paths": ["s3://cloudmart/cdc/updates/"]}
-).toDF()
-
-updates_df.createOrReplaceTempView("cdc_updates")
+bronze_df = spark.read.format("parquet") \
+    .load("s3://YOUR-BRONZE-BUCKET/structured/orders/raw/")
 ```
 
-### Step 3: Execute MERGE Operation
+### Step 3: Apply ETL Transformations
+- Filter null `order_value`
+- Clean negative values to 0
+- Replace null `status` with "unknown"
+- Add `processed_at` timestamp
+- Select and rename columns
+
 ```python
-spark.sql("""
-MERGE INTO s3tables_catalog.cloudmart_db.silver_orders AS target
-USING cdc_updates AS source
-ON target.order_id = source.order_id
-WHEN MATCHED THEN UPDATE SET 
-    target.order_value = source.order_value,
-    target.updated_at = source.updated_at,
-    target.status = source.status
-WHEN NOT MATCHED THEN INSERT (
-    order_id, user_id, product_id, order_value, order_date, updated_at, status
-) VALUES (
-    source.order_id, source.user_id, source.product_id, 
-    source.order_value, source.order_date, source.updated_at, source.status
-)
-""")
+silver_df = bronze_df \
+    .filter(col("order_value").isNotNull()) \
+    .withColumn("order_value_clean",
+                when(col("order_value") < 0, 0)
+                .otherwise(col("order_value"))) \
+    .withColumn("status_clean",
+                when(col("status").isNull(), "unknown")
+                .otherwise(col("status"))) \
+    .withColumn("processed_at", current_timestamp()) \
+    .select(
+        col("order_id"),
+        col("user_id"),
+        col("product_id"),
+        col("order_value_clean").alias("order_value"),
+        col("order_date").cast("timestamp").alias("order_date"),
+        col("status_clean").alias("status"),
+        col("processed_at")
+    )
 ```
 
-### Step 4: Verify MERGE Results
+### Step 4: Write to S3 Tables
 ```python
-result = spark.sql("SELECT * FROM s3tables_catalog.cloudmart_db.silver_orders WHERE status = 'updated'")
-result.show()
+silver_df.writeTo(f"{NAMESPACE}.{SILVER_TABLE}") \
+    .using("iceberg") \
+    .tableProperty("format-version", "2") \
+    .createOrReplace()
 ```
-
-## Understanding MERGE
-- **MATCHED**: Updates existing records
-- **NOT MATCHED**: Inserts new records
-- **ACID**: All-or-nothing transaction
-- **Efficient**: Only processes changed records
 
 ## Expected Output
 ```
-=== ACID TRANSACTIONS AND MERGE ===
-CDC updates to process: 100
-MERGE operation completed
-Updated records: 75
-Inserted records: 25
+=== Starting Bronze to Silver ETL ===
+Bronze records: 10,000
+Silver records after transformation: 9,480
+✓ ETL Complete: Data written to s3tables.swiftshop.silver_orders
 ```
 
 ## Verification
+Query in Athena (catalog: `s3tablescatalog/swiftshop-analytics-tables`):
 ```sql
-SELECT status, COUNT(*) FROM s3tables_catalog.cloudmart_db.silver_orders GROUP BY status;
+SELECT COUNT(*) FROM swiftshop.silver_orders;
+SELECT status, COUNT(*) FROM swiftshop.silver_orders GROUP BY status;
 ```
 
 ## Common Issues
-- **Duplicate keys**: Ensure unique order_id in source
-- **Schema mismatch**: Verify column names match
-- **Transaction timeout**: Reduce batch size
+- **Catalog not found**: Verify glue.id matches your account
+- **S3 path error**: Check bronze bucket path
+- **Schema mismatch**: Ensure column names match table definition
 
 ## Success Criteria
-✅ Silver table created  
-✅ CDC updates loaded  
-✅ MERGE executed successfully  
-✅ Records updated and inserted  
-✅ ACID guarantees maintained
+✅ Bronze data read from S3
+✅ Null values filtered
+✅ Negative values cleaned
+✅ Columns renamed and typed
+✅ Data written to Iceberg table in S3 Tables

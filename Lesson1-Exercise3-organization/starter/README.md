@@ -7,146 +7,126 @@ Organize bronze layer with hierarchical structure and date partitioning for effi
 - Design hierarchical bronze layer structure
 - Implement date-based partitioning
 - Separate structured vs unstructured data
-- Enable efficient incremental queries
-- Track metadata for lineage
+- Add metadata columns for lineage tracking
+- Create metadata JSON files for datasets
 
 ## Prerequisites
 - Exercise 1 & 2 completed (data in bronze)
 - Pre-configured Docker container with all dependencies
 - Understanding of partitioning concepts
-- Knowledge of Hive-style partitioning
 
 ## Step-by-Step Instructions
 
-### Step 1: Load Data from Bronze
-Load previously saved data:
+### Step 1: Initialize S3 Client
 ```python
-orders_obj = s3.get_object(Bucket=bronze_bucket, Key='bronze/structured/orders/orders.parquet')
-orders_df = pd.read_parquet(BytesIO(orders_obj['Body'].read()))
-
-clickstream_obj = s3.get_object(Bucket=bronze_bucket, Key='bronze/unstructured/clickstream/clickstream.parquet')
-clickstream_df = pd.read_parquet(BytesIO(clickstream_obj['Body'].read()))
+s3_client = boto3.client('s3')
 ```
 
-### Step 2: Add Partition Columns
-Extract date for partitioning:
+### Step 2: Review Current Structure
+Understand the flat structure from Exercises 1 & 2:
+```
+s3://bucket/
+├── orders/orders.parquet
+└── clickstream/clickstream.parquet
+```
+
+### Step 3: Load Existing Data
+List and read parquet files from S3:
 ```python
-# For orders
-orders_df['partition_date'] = pd.to_datetime(orders_df['order_date']).dt.date
-
-# For clickstream
-clickstream_df['partition_date'] = pd.to_datetime(clickstream_df['timestamp']).dt.date
+response = s3_client.list_objects_v2(Bucket=BUCKET_NAME, Prefix='orders/')
+orders_key = [obj['Key'] for obj in response['Contents'] if obj['Key'].endswith('.parquet')][0]
+response = s3_client.get_object(Bucket=BUCKET_NAME, Key=orders_key)
+orders_df = pd.read_parquet(BytesIO(response['Body'].read()))
 ```
 
-### Step 3: Save with Date Partitioning
-Write each date partition separately:
+### Step 4: Add Metadata Columns
 ```python
-# Partition orders by date
-for date, group in orders_df.groupby('partition_date'):
-    partition_key = f'bronze/structured/orders/date={date}/orders.parquet'
-    
-    parquet_buffer = BytesIO()
-    group.to_parquet(parquet_buffer, index=False)
-    
-    s3.put_object(
-        Bucket=bronze_bucket,
-        Key=partition_key,
-        Body=parquet_buffer.getvalue()
-    )
+orders_df['ingestion_timestamp'] = datetime.now()
+orders_df['source_system'] = 'postgresql'
+orders_df['data_type'] = 'structured'
+orders_df['ingestion_date'] = pd.to_datetime(orders_df['order_date']).dt.date
 ```
 
-### Step 4: Repeat for Clickstream
-Apply same pattern to clickstream data:
+### Step 5: Write Date Partitions
 ```python
-for date, group in clickstream_df.groupby('partition_date'):
-    partition_key = f'bronze/unstructured/clickstream/date={date}/clickstream.parquet'
-    # ... save partition
+for date, group in orders_df.groupby('ingestion_date'):
+    partition_path = f'structured/orders/raw/date={date}/orders.parquet'
+    buffer = BytesIO()
+    group.to_parquet(buffer, index=False)
+    buffer.seek(0)
+    s3_client.put_object(Bucket=BUCKET_NAME, Key=partition_path, Body=buffer.getvalue())
 ```
 
-## Understanding Bronze Layer Organization
-
-### Hierarchical Structure
+### Step 6: Create Metadata Files
+```python
+orders_metadata = {
+    "dataset_name": "orders",
+    "data_type": "structured",
+    "source_system": "postgresql",
+    "row_count": len(orders_df),
+    "columns": len(orders_df.columns),
+    "created_at": datetime.now().isoformat()
+}
+s3_client.put_object(
+    Bucket=BUCKET_NAME,
+    Key='structured/orders/metadata.json',
+    Body=json.dumps(orders_metadata, indent=2)
+)
 ```
-bronze/
-├── structured/           # Fixed schema data
+
+### Step 7: Demonstrate Partition Benefits
+Read a single partition to show efficiency:
+```python
+response = s3_client.get_object(Bucket=BUCKET_NAME, Key=partition_path)
+partition_df = pd.read_parquet(BytesIO(response['Body'].read()))
+```
+
+## Target Structure
+```
+s3://bucket/
+├── structured/
 │   └── orders/
-│       ├── date=2024-01-15/
-│       │   └── orders.parquet
-│       └── date=2024-01-16/
-│           └── orders.parquet
-└── unstructured/         # Flexible schema data
+│       ├── raw/
+│       │   └── date=2026-01-15/
+│       │       └── orders.parquet
+│       └── metadata.json
+└── unstructured/
     └── clickstream/
-        ├── date=2024-01-15/
-        │   └── clickstream.parquet
-        └── date=2024-01-16/
-            └── clickstream.parquet
+        ├── raw/
+        │   └── date=2026-01-15/
+        │       └── clickstream.parquet
+        └── metadata.json
 ```
-
-### Benefits of Partitioning
-- **Query efficiency**: Only scan relevant partitions
-- **Incremental loads**: Easy to identify new data
-- **Cost savings**: Reduced data scanned in Athena
-- **Organization**: Clear data structure
 
 ## Expected Output
 ```
-=== EXERCISE 3: BRONZE LAYER ORGANIZATION ===
+[Step 4] Reorganizing Structured Data (Orders)...
+  Loaded 10,000 orders from existing bronze
+  Writing to organized structure with date partitions...
+✓ Structured data reorganized
+  Partitions created: 365
 
-STEP 1: LOAD DATA FROM BRONZE LAYER
-Orders loaded: 1000 records
-Clickstream loaded: 5000 records
+[Step 5] Reorganizing Unstructured Data (Clickstream)...
+  Loaded 5,000 events from existing bronze
+✓ Unstructured data reorganized
 
-STEP 2: ADD DATE PARTITION COLUMNS
-Partition columns added:
-Orders date range: 2024-01-15 to 2024-01-20
-Clickstream date range: 2024-01-15 to 2024-01-20
-Unique dates in orders: 6
-Unique dates in clickstream: 6
+[Step 6] Creating Metadata Files...
+✓ Orders metadata: 10,000 rows, 10 columns
+✓ Clickstream metadata: 5,000 events, 11 columns
 
-STEP 3: SAVE WITH DATE PARTITIONING
-✓ Orders saved to 6 date partitions
-✓ Clickstream saved to 6 date partitions
-
-STEP 4: VERIFY ORGANIZATION
-Bronze layer structure:
-bronze/structured/orders/date=2024-01-15/
-bronze/structured/orders/date=2024-01-16/
-bronze/unstructured/clickstream/date=2024-01-15/
-bronze/unstructured/clickstream/date=2024-01-16/
-```
-
-## Verification
-List partitions in S3:
-```bash
-aws s3 ls s3://swiftshop-lakehouse/bronze/structured/orders/ --recursive
-aws s3 ls s3://swiftshop-lakehouse/bronze/unstructured/clickstream/ --recursive
-```
-
-Query with Athena (partition pruning):
-```sql
-CREATE EXTERNAL TABLE bronze_orders (
-  order_id bigint,
-  user_id string,
-  order_value double
-)
-PARTITIONED BY (date string)
-STORED AS PARQUET
-LOCATION 's3://swiftshop-lakehouse/bronze/structured/orders/';
-
-MSCK REPAIR TABLE bronze_orders;
-
--- Efficient query with partition filter
-SELECT COUNT(*) FROM bronze_orders WHERE date = '2024-01-15';
+[Step 7] Demonstrating Partition Benefits...
+✓ Partition query completed
+  Benefit: Only reads relevant partition, not entire dataset
 ```
 
 ## Common Issues
+- **No data found**: Run Exercise 1 & 2 first
 - **Date parsing errors**: Ensure correct datetime format
 - **Empty partitions**: Check groupby logic
-- **S3 path errors**: Verify Hive-style format `key=value`
 
 ## Success Criteria
-✅ Data partitioned by date  
-✅ Hierarchical structure created  
-✅ Structured/unstructured separated  
-✅ Partitions queryable in Athena  
-✅ Partition pruning working
+✅ Data partitioned by date
+✅ Hierarchical structure created
+✅ Structured/unstructured separated
+✅ Metadata files created
+✅ Partition query demonstrated

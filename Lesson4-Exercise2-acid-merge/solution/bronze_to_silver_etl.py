@@ -1,5 +1,6 @@
 """
-Exercise 2 Starter: ACID Transactions and MERGE Operations
+Exercise 2: Bronze to Silver ETL with PySpark on AWS Glue
+Reads bronze parquet from S3 and writes to silver Iceberg table in S3 Tables
 """
 
 import sys
@@ -32,24 +33,41 @@ SILVER_TABLE = "silver_orders"
 
 print("=== Starting Bronze to Silver ETL ===")
 
-# TODO: Read bronze parquet from S3
-bronze_df = # YOUR CODE HERE
+# Read bronze parquet from S3
+bronze_df = spark.read.format("parquet") \
+    .load("s3://lakehouse-student-bronze-ae1254b1-cafe-479b-bce5-acb312f6d1c0/structured/orders/raw/")
 
 print(f"Bronze records: {bronze_df.count()}")
 
-# TODO: ETL Transformations
-# - Filter null order_value
-# - Clean negative order_value to 0
-# - Replace null status with "unknown"
-# - Add processed_at timestamp
-# - Select and rename columns
-silver_df = bronze_df  # YOUR CODE HERE
+# ETL Transformations
+silver_df = bronze_df \
+    .filter(col("order_value").isNotNull()) \
+    .withColumn("order_value_clean",
+                when(col("order_value") < 0, 0)
+                .otherwise(col("order_value"))) \
+    .withColumn("status_clean",
+                when(col("status").isNull(), "unknown")
+                .otherwise(col("status"))) \
+    .withColumn("processed_at", current_timestamp()) \
+    .select(
+        col("order_id"),
+        col("user_id"),
+        col("product_id"),
+        col("order_value_clean").alias("order_value"),
+        col("order_date").cast("timestamp").alias("order_date"),
+        col("status_clean").alias("status"),
+        col("processed_at")
+    )
 
 print(f"Silver records after transformation: {silver_df.count()}")
 
-# TODO: Write to S3 Tables as Iceberg
-# Hint: Use silver_df.writeTo() with .using("iceberg")
-# YOUR CODE HERE
+# Write to S3 Tables
+spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {NAMESPACE}")
+
+silver_df.writeTo(f"{NAMESPACE}.{SILVER_TABLE}") \
+    .using("iceberg") \
+    .tableProperty("format-version", "2") \
+    .createOrReplace()
 
 print(f"✓ ETL Complete: Data written to s3tables.{NAMESPACE}.{SILVER_TABLE}")
 

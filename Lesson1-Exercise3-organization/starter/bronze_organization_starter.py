@@ -1,7 +1,6 @@
 """
 Exercise 3: Bronze Layer Organization - Structuring Raw Data
-Student Name: _______________
-Date: _______________
+Lesson 1: Introduction to Data Lakes and Lakehouses
 
 Learning Objectives:
 - Understand bronze layer organization principles
