@@ -3,12 +3,15 @@ Exercise 1 Starter: Silver Layer Transformation
 """
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, explode, date_trunc, from_unixtime
 import time
+import os
+import tempfile
 
 spark = SparkSession.builder \
     .appName("SilverTransformation") \
     .config("spark.sql.adaptive.enabled", "true") \
+    .config("spark.sql.legacy.parquet.nanosAsLong", "true") \
     .getOrCreate()
 
 print("=== SILVER LAYER: DATA CLEANING AND ENRICHMENT ===\n")

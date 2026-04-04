@@ -5,6 +5,7 @@ Exercise 2 Solution: Gold Layer Business Metrics with PySpark
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, countDistinct, sum, count, avg, max, datediff, current_date, date_sub, when, round, lit, desc
 from pyspark.sql.window import Window
+import time
 
 spark = SparkSession.builder \
     .appName("GoldAggregation") \
