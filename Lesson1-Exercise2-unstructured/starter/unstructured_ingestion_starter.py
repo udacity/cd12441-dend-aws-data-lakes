@@ -22,9 +22,9 @@ import os
 import uuid
 from io import BytesIO
 
-from dotenv import load_dotenv
+from load_env import load_env
 
-load_dotenv("/workspace/.env")
+load_env()
 
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')

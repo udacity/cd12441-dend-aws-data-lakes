@@ -2,12 +2,12 @@
 Deploy and run Time Travel & Schema Evolution Glue job
 """
 
-from dotenv import load_dotenv
+from load_env import load_env
 import boto3
 import time
 import os
 
-load_dotenv("/workspace/.env")
+load_env()
 
 s3 = boto3.client('s3')
 glue = boto3.client('glue')

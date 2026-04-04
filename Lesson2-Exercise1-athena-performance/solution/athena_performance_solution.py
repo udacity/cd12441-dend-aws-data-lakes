@@ -9,10 +9,14 @@ import time
 import os
 import uuid
 from datetime import datetime
+from load_env import load_env
 
-BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-athena-{uuid.uuid4()}')
+load_env()
+
+ATHENA_BUCKET_NAME = os.environ.get('ATHENA_BUCKET_NAME', f'lakehouse-student-athena-{uuid.uuid4()}')
+BUCKET_NAME = os.environ.get('BUCKET_NAME')
 DATABASE_NAME = 'lakehouse_lesson2'
-ATHENA_OUTPUT = f's3://{BUCKET_NAME}/athena-results/'
+ATHENA_OUTPUT = f's3://{ATHENA_BUCKET_NAME}/athena-results/'
 
 athena = boto3.client('athena', region_name='us-east-1')
 
@@ -41,7 +45,7 @@ def create_database():
 
 def create_structured_table():
     print("\n[Step 2] Creating Table for Structured Data...")
-    print(f"  Location: s3://{BUCKET_NAME}/bronze/orders/")
+    print(f"  Location: s3://{BUCKET_NAME}/orders/")
     
     query = f"""
     CREATE EXTERNAL TABLE IF NOT EXISTS {DATABASE_NAME}.orders_structured (
@@ -53,7 +57,7 @@ def create_structured_table():
         status STRING
     )
     STORED AS PARQUET
-    LOCATION 's3://{BUCKET_NAME}/bronze/orders/'
+    LOCATION 's3://{BUCKET_NAME}/orders/'
     """
     execute_query(query)
     print("✓ Table 'orders_structured' created")

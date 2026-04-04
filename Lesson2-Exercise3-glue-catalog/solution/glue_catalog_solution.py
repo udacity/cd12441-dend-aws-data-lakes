@@ -11,6 +11,9 @@ import time
 import os
 from datetime import datetime, timedelta
 import io
+from load_env import load_env
+
+load_env()
 
 BUCKET_NAME = os.environ.get('BUCKET_NAME')
 DATABASE_NAME = 'swiftshop_catalog'
@@ -217,10 +220,10 @@ if __name__ == "__main__":
         print("   Run: export BUCKET_NAME='your-bucket-name'")
         exit(1)
     
-    if not IAM_ROLE or IAM_ROLE == 'arn:aws:iam::123456789012:role/GlueServiceRole':
+    if not IAM_ROLE or IAM_ROLE == 'arn:aws:iam::123456789012:role/ecommerce-analytics-glue-role-dev':
         print("\n⚠️  Warning: Using default IAM role ARN")
         print("   Set GLUE_ROLE_ARN environment variable with your Glue service role")
-        print("   Example: export GLUE_ROLE_ARN='arn:aws:iam::YOUR_ACCOUNT:role/GlueServiceRole'")
+        print("   Example: export GLUE_ROLE_ARN='arn:aws:iam::YOUR_ACCOUNT:role/ecommerce-analytics-glue-role-dev'")
         print("\n   Continuing with default (may fail)...\n")
     
     create_glue_database()

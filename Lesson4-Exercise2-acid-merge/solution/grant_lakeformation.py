@@ -3,9 +3,9 @@ Grant Lake Formation permissions for Glue ETL role to access S3 Tables
 """
 
 import boto3
-from dotenv import load_dotenv
+from load_env import load_env
 
-load_dotenv("/workspace/.env")
+load_env()
 
 session = boto3.Session(region_name='us-east-1')
 lf = session.client('lakeformation')

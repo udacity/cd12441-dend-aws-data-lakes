@@ -23,12 +23,25 @@ import os
 import uuid
 from io import BytesIO
 
-from dotenv import load_dotenv
+from load_env import load_env
 
-load_dotenv("/workspace/.env")
+load_env()
 
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
+
+s3_client = boto3.client("s3")
+#Verify if bucket already exists
+buckets = s3_client.list_buckets(
+    MaxBuckets=1,
+    Prefix="lakehouse-student-bronze-",
+    BucketRegion='us-east-1'
+)['Buckets']
+
+# Get name of bucket if already exists
+if buckets:
+    BUCKET_NAME = buckets[0]['Name']
+
 LOCAL_DATA_PATH = 'data/clickstream.json'
 S3_BRONZE_PATH = 'clickstream/clickstream.parquet'
 

@@ -12,6 +12,9 @@ import time
 import os
 from datetime import datetime, timedelta
 import io
+from load_env import load_env
+
+load_env()
 
 BUCKET_NAME = os.environ.get('BUCKET_NAME')
 DATABASE_NAME = 'swiftshop_catalog'

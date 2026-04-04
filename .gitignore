@@ -19,10 +19,13 @@ spark-warehouse/
 # Data files
 *.parquet
 *.csv
-*.json
 *.avro
 output/
 data/
+
+# Allow starter data files for exercises
+!**/starter/data/
+!**/starter/data/**
 
 # Jupyter
 .ipynb_checkpoints/

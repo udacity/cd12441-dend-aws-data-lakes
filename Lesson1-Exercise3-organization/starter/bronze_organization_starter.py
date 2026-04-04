@@ -22,6 +22,9 @@ import time
 import os
 from io import BytesIO
 from datetime import datetime
+from load_env import load_env
+
+load_env()
 
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'lakehouse-lesson1-student-123456789')

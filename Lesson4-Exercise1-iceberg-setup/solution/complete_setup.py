@@ -1,13 +1,13 @@
 """
 Complete Iceberg Table Setup with S3 Tables
-Creates S3 table bucket, namespace, and silver Iceberg table for Exercise 2
+Creates S3 table bucket, namespace, and silver Iceberg table for Exercise 1
 """
 
-from dotenv import load_dotenv
+from load_env import load_env
 import boto3
 import time
 
-load_dotenv("/workspace/.env")
+load_env()
 
 # Initialize clients
 athena = boto3.client('athena', region_name='us-east-1')
@@ -95,6 +95,6 @@ if __name__ == "__main__":
     print(f"\n=== Setup Complete ===")
     print(f"✓ Table bucket: {TABLE_BUCKET_NAME}")
     print(f"✓ Namespace: {NAMESPACE}")
-    print(f"✓ Silver table: {SILVER_TABLE} (empty, for Exercise 2)")
+    print(f"✓ Silver table: {SILVER_TABLE} (empty, for Exercise 1)")
     print(f"\nVerify in Athena (use catalog: s3tablescatalog/{TABLE_BUCKET_NAME}):")
     print(f"DESCRIBE {NAMESPACE}.{SILVER_TABLE};")

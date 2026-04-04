@@ -13,6 +13,9 @@ import time
 import os
 import uuid
 from datetime import datetime
+from load_env import load_env
+
+load_env()
 
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-athena-{uuid.uuid4()}')
 DATABASE_NAME = 'lakehouse_lesson2'

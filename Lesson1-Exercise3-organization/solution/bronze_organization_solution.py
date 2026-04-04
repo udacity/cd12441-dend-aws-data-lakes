@@ -21,11 +21,27 @@ import boto3
 import json
 import time
 import os
+import uuid
 from io import BytesIO
 from datetime import datetime
+from load_env import load_env
+
+load_env()
 
 # Configuration
-BUCKET_NAME = os.environ.get('BUCKET_NAME', 'lakehouse-lesson1-student-123456789')
+BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
+
+s3_client = boto3.client("s3")
+#Verify if bucket already exists
+buckets = s3_client.list_buckets(
+    MaxBuckets=1,
+    Prefix="lakehouse-student-bronze-",
+    BucketRegion='us-east-1'
+)['Buckets']
+
+# Get name of bucket if already exists
+if buckets:
+    BUCKET_NAME = buckets[0]['Name']
 
 print("="*70)
 print("EXERCISE 3: BRONZE LAYER ORGANIZATION")

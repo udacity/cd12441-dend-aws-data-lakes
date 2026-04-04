@@ -2,12 +2,12 @@
 Deploy and run Bronze to Silver ETL Glue job
 """
 
-from dotenv import load_dotenv
+from load_env import load_env
 import boto3
 import time
 import os
 
-load_dotenv("/workspace/.env")
+load_env()
 
 # Initialize clients
 s3 = boto3.client('s3')
