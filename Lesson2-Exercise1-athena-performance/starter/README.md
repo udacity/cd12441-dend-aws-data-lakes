@@ -13,7 +13,6 @@ Create Athena tables for different data organizations and benchmark query perfor
 ### Verify Prerequisites
 ```bash
 export BUCKET_NAME="your-bucket-name"
-cd /Users/emota/Projects/cd12441-dend-aws-data-lakes/Lesson2-Exercise1-athena-performance
 python setup.py
 ```
 

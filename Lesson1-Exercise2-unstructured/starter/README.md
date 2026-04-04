@@ -14,7 +14,7 @@ Load unstructured JSON data into the bronze layer, understanding schema-on-read 
 - Exercise 1 completed
 - Pre-configured Docker container with all dependencies
 - Sample data: `data/clickstream.json` available locally
-- All Python packages (boto3, pandas, python-dotenv) pre-installed
+- All Python packages (boto3, pandas) pre-installed
 
 ## Step-by-Step Instructions
 

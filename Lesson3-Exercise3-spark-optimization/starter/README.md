@@ -3,12 +3,9 @@
 ## Overview
 Apply five Spark optimization techniques to improve pipeline performance.
 
-## Setup
-1. Generate test data:
-```bash
-cd solution
-python generate_data.py
-```
+## Prerequisites
+- Pre-configured Docker container with PySpark environment
+- Sample data in `data/`: `orders_large.parquet`, `customers.parquet`, `products.parquet`
 
 ## Your Tasks
 

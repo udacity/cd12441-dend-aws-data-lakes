@@ -14,7 +14,7 @@ Load structured Parquet data into the bronze layer, understanding schema-on-writ
 - Pre-configured Docker container with all dependencies installed
 - AWS credentials already configured in environment
 - Sample data: `data/orders.parquet` available locally
-- All Python packages (boto3, pandas, pyarrow, python-dotenv) pre-installed
+- All Python packages (boto3, pandas, pyarrow) pre-installed
 
 ## Step-by-Step Instructions
 
