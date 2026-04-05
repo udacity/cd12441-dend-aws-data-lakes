@@ -1,50 +1,75 @@
 # Exercise 1: Create S3 Tables with Iceberg - Setup
 
-## Quick Start
+## Objective
+Create an S3 table bucket, namespace, and an empty Iceberg table using the S3 Tables API and Athena.
 
-Run the setup script to create the S3 table bucket and namespace:
-```bash
-python solution/complete_setup.py
-```
+## What You'll Learn
+- Create S3 table buckets with the `s3tables` API
+- Create namespaces for organizing Iceberg tables
+- Use Athena to create Iceberg tables with `TBLPROPERTIES`
+- Handle idempotent resource creation with `ConflictException`
 
-This script:
-1. ✅ Creates table bucket: `swiftshop-analytics-tables`
-2. ✅ Creates namespace: `swiftshop`
-3. ✅ Creates table: `silver_orders` (Iceberg format, empty for Exercise 2)
+## Prerequisites
+- AWS credentials configured
+- An S3 bucket for Athena query results
 
-## Before Running
+## Step-by-Step Instructions
 
-Update `ATHENA_BUCKET_NAME` in `solution/complete_setup.py` if needed:
+### TODO 1: Create S3 Table Bucket and Namespace
 ```python
-ATHENA_BUCKET_NAME = 's3://swiftshop-data-lake/athena-results/'
+resp = s3tables.create_table_bucket(name=TABLE_BUCKET_NAME)
+arn = resp['arn']
+
+s3tables.create_namespace(tableBucketARN=arn, namespace=[NAMESPACE])
+```
+Handle `ConflictException` for both calls if resources already exist.
+
+### TODO 2: Create the Iceberg Table
+Write a `CREATE TABLE` SQL statement with the schema and Iceberg properties:
+```sql
+CREATE TABLE swiftshop.silver_orders (
+    order_id STRING,
+    user_id STRING,
+    product_id STRING,
+    order_value DOUBLE,
+    order_date TIMESTAMP,
+    status STRING,
+    processed_at TIMESTAMP
+)
+TBLPROPERTIES ('table_type' = 'ICEBERG')
 ```
 
-## Table Schema
-
-**silver_orders**
-- order_id: STRING
-- user_id: STRING
-- product_id: STRING
-- order_value: DOUBLE
-- order_date: TIMESTAMP
-- status: STRING
-- processed_at: TIMESTAMP
-
-## SQL Starter
-
-The `starter/create_table.sql` file contains SQL templates for:
-1. Creating the silver_orders table via Athena
-2. Inserting sample data
-3. Querying and verifying the table
+## Running Your Code
+```bash
+python create_table.py
+```
 
 ## Verification
-
 Query in Athena (use catalog: `s3tablescatalog/swiftshop-analytics-tables`):
 ```sql
 DESCRIBE swiftshop.silver_orders;
 ```
 
+## Expected Output
+```
+=== Exercise 1: S3 Tables Iceberg Setup ===
+
+✓ Created table bucket: arn:aws:s3tables:us-east-1:ACCOUNT_ID:bucket/swiftshop-analytics-tables
+✓ Created namespace: swiftshop
+✓ Creating silver table in S3 Tables completed
+
+=== Setup Complete ===
+✓ Table bucket: swiftshop-analytics-tables
+✓ Namespace: swiftshop
+✓ Silver table: silver_orders (empty, for Exercise 2)
+```
+
+## Common Issues
+- **ConflictException**: Resource already exists — this is safe to ignore
+- **Access denied on Athena**: Check that `ATHENA_BUCKET_NAME` points to a valid S3 location you own
+- **Catalog not found**: Use `s3tablescatalog/swiftshop-analytics-tables` as the catalog
+
 ## Success Criteria
-✅ Script completes without errors
-✅ Table bucket and namespace created
-✅ silver_orders table exists (empty, ready for Exercise 2)
+✅ Table bucket created
+✅ Namespace created
+✅ silver_orders Iceberg table created (empty, ready for Exercise 2)
