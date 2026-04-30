@@ -42,7 +42,7 @@ buckets = s3_client.list_buckets(
 if buckets:
     BUCKET_NAME = buckets[0]['Name']
 
-LOCAL_DATA_PATH = 'data/clickstream.json'
+LOCAL_DATA_PATH = '../starter/data/clickstream.json'
 S3_BRONZE_PATH = 'clickstream/clickstream.parquet'
 
 print("="*70)

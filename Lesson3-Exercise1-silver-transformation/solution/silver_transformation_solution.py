@@ -13,8 +13,8 @@ spark = SparkSession.builder \
 
 print("=== SILVER LAYER: DATA CLEANING AND ENRICHMENT ===\n")
 
-bronze_orders = spark.read.parquet("data/orders.parquet")
-bronze_clicks = spark.read.json("data/clickstream.json")
+bronze_orders = spark.read.parquet("../starter/data/orders.parquet")
+bronze_clicks = spark.read.json("../starter/data/clickstream.json")
 
 start_time = time.time()
 

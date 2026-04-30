@@ -16,9 +16,9 @@ print("=== SPARK OPTIMIZATION SOLUTION ===\n")
 start_time = time.time()
 
 # Read data
-orders = spark.read.parquet("data/orders_large.parquet")
-customers = spark.read.parquet("data/customers.parquet")
-products = spark.read.parquet("data/products.parquet")
+orders = spark.read.parquet("../starter/data/orders_large.parquet")
+customers = spark.read.parquet("../starter/data/customers.parquet")
+products = spark.read.parquet("../starter/data/products.parquet")
 
 # Optimization 1: Predicate Pushdown - filter early
 filtered_orders = orders.filter(

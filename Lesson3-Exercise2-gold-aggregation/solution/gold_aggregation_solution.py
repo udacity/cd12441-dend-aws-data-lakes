@@ -17,8 +17,8 @@ print("=== GOLD LAYER: BUSINESS METRICS ===\n")
 start_time = time.time()
 
 # Load silver data
-silver_orders = spark.read.parquet("data/silver_orders.parquet")
-silver_clicks = spark.read.parquet("data/silver_clicks.parquet")
+silver_orders = spark.read.parquet("../starter/data/silver_orders.parquet")
+silver_clicks = spark.read.parquet("../starter/data/silver_clicks.parquet")
 
 # Task 1: Daily Product Performance
 gold_product_daily = silver_orders \

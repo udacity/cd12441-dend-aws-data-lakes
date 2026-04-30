@@ -26,7 +26,7 @@ load_env()
 
 # Configuration
 BUCKET_NAME = os.environ.get('BUCKET_NAME', f'lakehouse-student-bronze-{uuid.uuid4()}')
-LOCAL_DATA_PATH = 'data/orders.parquet'
+LOCAL_DATA_PATH = '../starter/data/orders.parquet'
 S3_BRONZE_PATH = f'orders/orders.parquet'
 
 print("="*70)
