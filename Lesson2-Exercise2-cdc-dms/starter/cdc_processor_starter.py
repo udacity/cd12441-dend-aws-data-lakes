@@ -181,7 +181,7 @@ if __name__ == "__main__":
     print("LESSON 2 - EXERCISE 2: CDC WITH DMS")
     print("="*70)
     
-    data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
     bookmark_path = os.path.join(data_dir, "bookmarks", "swiftshop_orders.json")
     
     # Check if data exists
