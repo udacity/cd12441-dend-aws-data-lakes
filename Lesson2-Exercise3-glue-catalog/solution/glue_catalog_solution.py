@@ -18,8 +18,8 @@ load_env()
 BUCKET_NAME = os.environ.get('BUCKET_NAME')
 DATABASE_NAME = 'swiftshop_catalog'
 CRAWLER_NAME = 'swiftshop-orders-crawler'
-ACCOUNT = ''
-IAM_ROLE = os.environ.get('GLUE_ROLE_ARN', f'arn:aws:iam::{ACCOUNT}:role/ecommerce-analytics-glue-role-dev')
+ACCOUNT_ID = sts.get_caller_identity()['Account']
+IAM_ROLE = os.environ.get('GLUE_ROLE_ARN', f'arn:aws:iam::{ACCOUNT_ID}:role/ecommerce-analytics-glue-role-dev')
 
 glue = boto3.client('glue', region_name='us-east-1')
 s3 = boto3.client('s3', region_name='us-east-1')
