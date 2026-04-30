@@ -10,14 +10,16 @@ import tempfile
 
 spark = SparkSession.builder \
     .appName("SilverTransformation") \
+    .remote("sc://localhost:15002") \
     .config("spark.sql.adaptive.enabled", "true") \
     .config("spark.sql.legacy.parquet.nanosAsLong", "true") \
     .getOrCreate()
 
 print("=== SILVER LAYER: DATA CLEANING AND ENRICHMENT ===\n")
 
-bronze_orders = spark.read.parquet("data/orders.parquet")
-bronze_clicks = spark.read.json("data/clickstream.json")
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
+bronze_orders = spark.read.parquet(os.path.join(DATA_DIR, "orders.parquet"))
+bronze_clicks = spark.read.json(os.path.join(DATA_DIR, "clickstream.json"))
 
 start_time = time.time()
 

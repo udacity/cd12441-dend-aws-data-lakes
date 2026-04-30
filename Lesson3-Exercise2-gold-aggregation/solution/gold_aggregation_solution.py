@@ -5,10 +5,12 @@ Exercise 2 Solution: Gold Layer Business Metrics with PySpark
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, countDistinct, sum, count, avg, max, datediff, current_date, date_sub, when, round, lit, desc
 from pyspark.sql.window import Window
+import os
 import time
 
 spark = SparkSession.builder \
     .appName("GoldAggregation") \
+    .remote("sc://localhost:15002") \
     .config("spark.sql.adaptive.enabled", "true") \
     .getOrCreate()
 
@@ -17,8 +19,9 @@ print("=== GOLD LAYER: BUSINESS METRICS ===\n")
 start_time = time.time()
 
 # Load silver data
-silver_orders = spark.read.parquet("../starter/data/silver_orders.parquet")
-silver_clicks = spark.read.parquet("../starter/data/silver_clicks.parquet")
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "starter", "data"))
+silver_orders = spark.read.parquet(os.path.join(DATA_DIR, "silver_orders.parquet"))
+silver_clicks = spark.read.parquet(os.path.join(DATA_DIR, "silver_clicks.parquet"))
 
 # Task 1: Daily Product Performance
 gold_product_daily = silver_orders \

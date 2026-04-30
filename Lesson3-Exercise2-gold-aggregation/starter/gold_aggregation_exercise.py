@@ -22,10 +22,12 @@ HINTS:
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, countDistinct, sum, count, avg, max, datediff, current_date, date_sub, when, round, lit, desc
 from pyspark.sql.window import Window
+import os
 import time
 
 spark = SparkSession.builder \
     .appName("GoldAggregation") \
+    .remote("sc://localhost:15002") \
     .config("spark.sql.adaptive.enabled", "true") \
     .getOrCreate()
 
@@ -34,8 +36,9 @@ print("=== GOLD LAYER: BUSINESS METRICS ===\n")
 start_time = time.time()
 
 # Load silver data (assume these exist from previous exercises)
-silver_orders = spark.read.parquet("data/silver_orders.parquet")
-silver_clicks = spark.read.parquet("data/silver_clicks.parquet")
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
+silver_orders = spark.read.parquet(os.path.join(DATA_DIR, "silver_orders.parquet"))
+silver_clicks = spark.read.parquet(os.path.join(DATA_DIR, "silver_clicks.parquet"))
 
 # TODO: Task 1 - Daily Product Performance
 # Group by product_id and order_date

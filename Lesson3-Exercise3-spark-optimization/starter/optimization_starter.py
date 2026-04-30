@@ -6,10 +6,12 @@ TODO: Apply five optimization techniques to improve pipeline performance
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, sum, count, avg, broadcast
+import os
 import time
 
 spark = SparkSession.builder \
     .appName("SparkOptimization") \
+    .remote("sc://localhost:15002") \
     .config("spark.sql.adaptive.enabled", "true") \
     .getOrCreate()
 
@@ -18,9 +20,10 @@ print("=== SPARK OPTIMIZATION EXERCISE ===\n")
 start_time = time.time()
 
 # Read data
-orders = spark.read.parquet("data/orders_large.parquet")
-customers = spark.read.parquet("data/customers.parquet")
-products = spark.read.parquet("data/products.parquet")
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
+orders = spark.read.parquet(os.path.join(DATA_DIR, "orders_large.parquet"))
+customers = spark.read.parquet(os.path.join(DATA_DIR, "customers.parquet"))
+products = spark.read.parquet(os.path.join(DATA_DIR, "products.parquet"))
 
 # TODO 1: Apply predicate pushdown - filter orders early
 # Hint: Filter for completed orders with order_date >= "2025-01-01"

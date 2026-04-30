@@ -4,17 +4,20 @@ Exercise 1 Solution: Silver Layer Transformation
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
+import os
 import time
 
 spark = SparkSession.builder \
     .appName("SilverTransformation") \
+    .remote("sc://localhost:15002") \
     .config("spark.sql.adaptive.enabled", "true") \
     .getOrCreate()
 
 print("=== SILVER LAYER: DATA CLEANING AND ENRICHMENT ===\n")
 
-bronze_orders = spark.read.parquet("../starter/data/orders.parquet")
-bronze_clicks = spark.read.json("../starter/data/clickstream.json")
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "starter", "data"))
+bronze_orders = spark.read.parquet(os.path.join(DATA_DIR, "orders.parquet"))
+bronze_clicks = spark.read.json(os.path.join(DATA_DIR, "clickstream.json"))
 
 start_time = time.time()
 

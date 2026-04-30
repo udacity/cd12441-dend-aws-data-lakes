@@ -4,10 +4,12 @@ Exercise 3 Solution: Spark Optimization Techniques
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, sum, count, avg, broadcast
+import os
 import time
 
 spark = SparkSession.builder \
     .appName("SparkOptimization") \
+    .remote("sc://localhost:15002") \
     .config("spark.sql.adaptive.enabled", "true") \
     .getOrCreate()
 
@@ -16,9 +18,10 @@ print("=== SPARK OPTIMIZATION SOLUTION ===\n")
 start_time = time.time()
 
 # Read data
-orders = spark.read.parquet("../starter/data/orders_large.parquet")
-customers = spark.read.parquet("../starter/data/customers.parquet")
-products = spark.read.parquet("../starter/data/products.parquet")
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "starter", "data"))
+orders = spark.read.parquet(os.path.join(DATA_DIR, "orders_large.parquet"))
+customers = spark.read.parquet(os.path.join(DATA_DIR, "customers.parquet"))
+products = spark.read.parquet(os.path.join(DATA_DIR, "products.parquet"))
 
 # Optimization 1: Predicate Pushdown - filter early
 filtered_orders = orders.filter(
