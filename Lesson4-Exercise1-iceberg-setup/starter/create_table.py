@@ -19,7 +19,7 @@ ACCOUNT_ID = sts.get_caller_identity()['Account']
 TABLE_BUCKET_NAME = 'swiftshop-analytics-tables'
 NAMESPACE = 'swiftshop'
 SILVER_TABLE = 'silver_orders'
-ATHENA_BUCKET_NAME = 's3://swiftshop-data-lake/athena-results/'
+ATHENA_BUCKET_NAME = f's3://swiftshop-data-lake-{ACCOUNT_ID}/athena-results/'
 
 def run_athena_query(query, description, catalog='awsdatacatalog'):
     """Execute Athena query and wait for completion"""

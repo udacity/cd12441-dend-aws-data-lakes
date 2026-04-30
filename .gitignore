@@ -10,6 +10,7 @@ ENV/
 *.egg-info/
 dist/
 build/
+.env
 
 # Spark
 metastore_db/
@@ -17,11 +18,8 @@ derby.log
 spark-warehouse/
 
 # Data files
-*.parquet
-*.csv
 *.avro
 output/
-data/
 
 # Allow starter data files for exercises
 !**/starter/data/

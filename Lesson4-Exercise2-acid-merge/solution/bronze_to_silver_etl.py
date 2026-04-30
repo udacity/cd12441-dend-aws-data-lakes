@@ -35,7 +35,7 @@ print("=== Starting Bronze to Silver ETL ===")
 
 # Read bronze parquet from S3
 bronze_df = spark.read.format("parquet") \
-    .load("s3://lakehouse-student-bronze-ae1254b1-cafe-479b-bce5-acb312f6d1c0/structured/orders/raw/")
+    .load("s3://lakehouse-student-bronze-ac4c3fb2-126e-4e13-b8f8-02d6dd8e42d5/structured/orders/raw/")
 
 print(f"Bronze records: {bronze_df.count()}")
 

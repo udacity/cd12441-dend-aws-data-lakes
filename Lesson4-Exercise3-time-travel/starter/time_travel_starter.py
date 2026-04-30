@@ -18,7 +18,7 @@ spark = SparkSession.builder \
     .config("spark.sql.defaultCatalog", "s3tables") \
     .config("spark.sql.catalog.s3tables", "org.apache.iceberg.spark.SparkCatalog") \
     .config("spark.sql.catalog.s3tables.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
-    .config("spark.sql.catalog.s3tables.glue.id", "633948902050:s3tablescatalog/swiftshop-analytics-tables") \
+    .config("spark.sql.catalog.s3tables.glue.id", "ACCOUNT:s3tablescatalog/swiftshop-analytics-tables") \
     .config("spark.sql.catalog.s3tables.warehouse", "s3://swiftshop-analytics-tables/bucket/swiftshop-analytics-tables") \
     .getOrCreate()
 

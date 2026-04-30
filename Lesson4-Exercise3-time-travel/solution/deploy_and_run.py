@@ -13,11 +13,12 @@ s3 = boto3.client('s3')
 glue = boto3.client('glue')
 sts = boto3.client('sts')
 
-S3_BUCKET = 'swiftshop-data-lake'
+ACCOUNT_ID = sts.get_caller_identity()['Account']
+S3_BUCKET = f'swiftshop-data-lake-{ACCOUNT_ID}'
 SCRIPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'time_travel_solution.py')
 S3_SCRIPT_KEY = 'glue-scripts/time_travel_solution.py'
 JOB_NAME = 'time-travel-schema-evolution'
-GLUE_ROLE = 'GlueIcebergETLRole'
+GLUE_ROLE = 'ecommerce-analytics-glue-role-dev'
 
 def upload_script():
     print("Uploading script to S3...")

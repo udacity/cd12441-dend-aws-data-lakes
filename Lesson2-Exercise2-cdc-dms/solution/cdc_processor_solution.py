@@ -170,13 +170,13 @@ if __name__ == "__main__":
     print("LESSON 2 - EXERCISE 2: CDC WITH DMS")
     print("="*70)
     
-    data_dir = os.path.join(os.path.dirname(__file__), "..", "starter", "data")
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
     bookmark_path = os.path.join(data_dir, "bookmarks", "swiftshop_orders.json")
     
     if not os.path.exists(os.path.join(data_dir, "full_load")):
         print("\n❌ Error: Sample data not found")
         print(f"\n   Generate data first:")
-        print(f"   cd ../starter/data")
+        print(f"   cd data")
         print(f"   python generate_dms_data.py")
         exit(1)
     

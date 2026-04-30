@@ -15,11 +15,12 @@ glue = boto3.client('glue')
 sts = boto3.client('sts')
 
 # Configuration
-S3_BUCKET = 'swiftshop-data-lake'  # Update with your bucket
+ACCOUNT_ID = sts.get_caller_identity()['Account']
+S3_BUCKET = f'swiftshop-data-lake-{ACCOUNT_ID}'  # Update with your bucket
 SCRIPT_PATH = 'bronze_to_silver_etl.py'
 S3_SCRIPT_KEY = 'glue-scripts/bronze_to_silver_etl.py'
 JOB_NAME = 'bronze-to-silver-etl'
-GLUE_ROLE = 'GlueIcebergETLRole'  # Role created by CloudFormation
+GLUE_ROLE = 'ecommerce-analytics-glue-role-dev'  # Role created by CloudFormation
 
 def upload_script():
     """Upload PySpark script to S3"""

@@ -12,7 +12,7 @@ lf = session.client('lakeformation')
 sts = session.client('sts')
 
 ACCOUNT_ID = sts.get_caller_identity()['Account']
-ROLE_ARN = f"arn:aws:iam::{ACCOUNT_ID}:role/GlueIcebergETLRole"
+ROLE_ARN = f"arn:aws:iam::{ACCOUNT_ID}:role/ecommerce-analytics-glue-role-dev"
 TABLE_BUCKET = 'swiftshop-analytics-tables'
 CATALOG_ID = f"{ACCOUNT_ID}:s3tablescatalog/{TABLE_BUCKET}"
 
