@@ -14,6 +14,7 @@ import io
 from load_env import load_env
 
 load_env()
+sts = boto3.client('sts')
 
 BUCKET_NAME = os.environ.get('BUCKET_NAME')
 DATABASE_NAME = 'swiftshop_catalog'
