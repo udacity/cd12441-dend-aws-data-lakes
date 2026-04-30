@@ -13,6 +13,7 @@ Organize bronze layer with hierarchical structure and date partitioning for effi
 ## Prerequisites
 - Exercise 1 & 2 completed (data in bronze)
 - Pre-configured Docker container with all dependencies
+- AWS credentials in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired)
 - Understanding of partitioning concepts
 
 ## Step-by-Step Instructions

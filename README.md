@@ -33,14 +33,18 @@ cd cd12441-dend-aws-data-lakes
 
 # Install Python dependencies
 pip install -r requirements.txt
-
-# Configure AWS credentials
-aws configure
 ```
+
+### AWS Credentials
+The exercises load AWS credentials from `/workspace/.env` (read by [load_env.py](load_env.py)).
+In the Udacity workspace, get your `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and
+`AWS_SESSION_TOKEN` from the **Cloud Resources** tab and paste them into `/workspace/.env`.
+See the course **Setup** page for the full template and re-paste instructions when the
+session token expires. Exercises that run purely locally (Lesson 2 Exercise 2 and all of
+Lesson 3) do not require credentials.
 
 ### Additional Requirements
 - **Python 3.8+**: Required for all exercises
-- **AWS CLI**: For resource management
 - **Java 8/11**: Required for PySpark local execution
 
 ## Exercise Structure

@@ -11,6 +11,7 @@ Implement a Bronze to Silver ETL pipeline using PySpark on AWS Glue with Iceberg
 - Grant Lake Formation permissions for S3 Tables access
 
 ## Prerequisites
+- AWS credentials in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired)
 - Exercise 1 completed (S3 table bucket and silver_orders table created)
 - Bronze data available in S3 (from Lesson 1)
 - Deploy the Glue IAM role:

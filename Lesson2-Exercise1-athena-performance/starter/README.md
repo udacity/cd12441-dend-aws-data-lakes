@@ -6,6 +6,8 @@ Create Athena tables for different data organizations and benchmark query perfor
 ## Prerequisites
 
 ### Required Setup
+**AWS credentials** in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired). This exercise also requires `BUCKET_NAME` to be set in `/workspace/.env` — use the same bucket name from Lesson 1.
+
 **Complete Lesson 1 exercises first:**
 - Exercise 1: Structured data ingestion → `s3://bucket/bronze/orders/`
 - Exercise 3: Data organization → `s3://bucket/bronze/structured/orders/raw/`

@@ -10,7 +10,7 @@ Create an S3 table bucket, namespace, and an empty Iceberg table using the S3 Ta
 - Handle idempotent resource creation with `ConflictException`
 
 ## Prerequisites
-- AWS credentials configured
+- AWS credentials in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired)
 - An S3 bucket for Athena query results
 
 ## Step-by-Step Instructions

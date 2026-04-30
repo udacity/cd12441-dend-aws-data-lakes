@@ -5,6 +5,9 @@ Create AWS Glue crawler to automatically discover schemas and partitions from S3
 
 ## Prerequisites
 
+### AWS Credentials
+AWS credentials in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired). This exercise also requires `BUCKET_NAME` and `GLUE_ROLE_ARN` in `/workspace/.env` — see the IAM role setup below for `GLUE_ROLE_ARN`.
+
 ### IAM Role Setup
 Create Glue service role with permissions:
 ```bash
@@ -28,10 +31,10 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
 ```
 
-Set environment variable:
-```bash
-export GLUE_ROLE_ARN="arn:aws:iam::YOUR_ACCOUNT:role/GlueServiceRole"
-export BUCKET_NAME="your-bucket-name"
+Add to `/workspace/.env`:
+```
+GLUE_ROLE_ARN=arn:aws:iam::YOUR_ACCOUNT:role/GlueServiceRole
+BUCKET_NAME=your-bucket-name
 ```
 
 ## Instructions

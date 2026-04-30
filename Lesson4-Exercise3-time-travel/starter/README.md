@@ -11,6 +11,7 @@ Use Iceberg time travel to query historical data and evolve table schemas withou
 - Understand S3 Tables automatic compaction
 
 ## Prerequisites
+- AWS credentials in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired)
 - Exercise 1 & 2 completed (silver_orders table with data)
 - AWS Glue 5.0 environment
 - Iceberg tables with at least one snapshot

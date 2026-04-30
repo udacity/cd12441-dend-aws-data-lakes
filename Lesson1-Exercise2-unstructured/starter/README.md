@@ -13,6 +13,7 @@ Load unstructured JSON data into the bronze layer, understanding schema-on-read 
 ## Prerequisites
 - Exercise 1 completed
 - Pre-configured Docker container with all dependencies
+- AWS credentials in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired)
 - Sample data: `data/clickstream.json` available locally
 - All Python packages (boto3, pandas) pre-installed
 
