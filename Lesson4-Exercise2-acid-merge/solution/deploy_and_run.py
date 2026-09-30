@@ -20,7 +20,7 @@ S3_BUCKET = f'swiftshop-data-lake-{ACCOUNT_ID}'  # Update with your bucket
 SCRIPT_PATH = 'bronze_to_silver_etl.py'
 S3_SCRIPT_KEY = 'glue-scripts/bronze_to_silver_etl.py'
 JOB_NAME = 'bronze-to-silver-etl'
-GLUE_ROLE = 'ecommerce-analytics-glue-role-dev'  # Role created by CloudFormation
+GLUE_ROLE = 'ecommerce-analytics-glue-role-dev'  # Provided by the lab (created at session start)
 
 def upload_script():
     """Upload PySpark script to S3"""
@@ -94,8 +94,7 @@ def run_glue_job():
 if __name__ == "__main__":
     print("=== Deploy and Run Glue ETL Job ===\n")
     print(f"⚠️  Prerequisites:")
-    print(f"   1. Deploy CloudFormation: aws cloudformation deploy --template-file glue-role.yaml --stack-name glue-etl-role --capabilities CAPABILITY_NAMED_IAM")
-    print(f"   2. Update S3_BUCKET = '{S3_BUCKET}'\n")
+    print(f"   1. Update S3_BUCKET = '{S3_BUCKET}'\n")
     
     upload_script()
     create_glue_job()

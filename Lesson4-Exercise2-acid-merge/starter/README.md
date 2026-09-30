@@ -14,10 +14,7 @@ Implement a Bronze to Silver ETL pipeline using PySpark on AWS Glue with Iceberg
 - AWS credentials in `/workspace/.env` (see the course **Setup** page; re-paste from the Cloud Resources tab if your session token has expired)
 - Exercise 1 completed (S3 table bucket and silver_orders table created)
 - Bronze data available in S3 (from Lesson 1)
-- Deploy the Glue IAM role:
-  ```bash
-  aws cloudformation deploy --template-file glue-role.yaml --stack-name glue-etl-role --capabilities CAPABILITY_NAMED_IAM
-  ```
+- The Glue IAM role `ecommerce-analytics-glue-role-dev`, which the lab creates for you when it starts. There is nothing to deploy.
 
 ## Starter Files
 
